@@ -14,6 +14,7 @@ public class WebSocketMessage {
     private String content;
     private String sender;
     private Long timestamp;
+    private AiRating rating; // AI response rating
     
     public static WebSocketMessage createUserMessage(String chatId, String content) {
         WebSocketMessage message = new WebSocketMessage();

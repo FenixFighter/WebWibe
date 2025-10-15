@@ -6,6 +6,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.ww2.dto.ChatRequest;
 import org.ww2.dto.WebSocketMessage;
+import org.ww2.dto.AiRating;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +17,7 @@ public class CustomerMessageService {
     private final ChatAssignmentService chatAssignmentService;
     private final MessageProcessingService messageProcessingService;
     private final ChatManagementService chatManagementService;
+    private final AiRatingService aiRatingService;
     private final SimpMessagingTemplate messagingTemplate;
 
     /**
@@ -48,8 +50,15 @@ public class CustomerMessageService {
             return;
         }
         
-        // Save and send AI response
-        saveAndSendAiResponse(chatId, aiResponse);
+        // Evaluate AI response and save with rating
+        AiRating rating = aiRatingService.evaluateAiResponse(message, aiResponse);
+        saveAndSendAiResponseWithRating(chatId, aiResponse, rating);
+        
+        // Check if low rating should trigger escalation
+        if (aiRatingService.shouldEscalateToSupport(rating)) {
+            log.warn("AI response rated low ({}), considering escalation for chat {}", rating.getScore(), chatId);
+            // Could trigger automatic escalation here if needed
+        }
     }
 
     /**
@@ -68,16 +77,16 @@ public class CustomerMessageService {
     }
 
     /**
-     * Saves AI message and sends it to client
+     * Saves AI message and sends it to client with rating
      */
-    private void saveAndSendAiResponse(String chatId, String aiResponse) {
+    private void saveAndSendAiResponseWithRating(String chatId, String aiResponse, AiRating rating) {
         // Save AI message
         chatService.saveAiMessage(chatId, aiResponse);
         
-        // Send AI response to client
-        WebSocketMessage aiMessage = WebSocketMessage.createAiMessage(chatId, aiResponse);
+        // Send AI response to client with rating
+        WebSocketMessage aiMessage = aiRatingService.createAiMessageWithRating(chatId, aiResponse, rating);
         messagingTemplate.convertAndSend("/topic/chat", aiMessage);
         
-        log.info("AI response sent for chat {}", chatId);
+        log.info("AI response sent for chat {} with rating {}/100", chatId, rating.getScore());
     }
 }

@@ -8,9 +8,6 @@ import org.ww2.dto.AuthResponse;
 import org.ww2.entity.User;
 import org.ww2.repository.UserRepository;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j

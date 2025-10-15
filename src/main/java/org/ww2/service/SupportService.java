@@ -95,6 +95,20 @@ public class SupportService {
         info.setAssignedAt(chat.getCreatedAt());
         info.setCustomerName(chat.getCustomerName());
         info.setCustomerEmail(chat.getCustomerEmail());
+        
+        // Check for low AI ratings in recent messages
+        List<ChatMessage> recentMessages = chatService.getChatHistory(chat.getChatId());
+        boolean hasLowRating = recentMessages.stream()
+            .filter(msg -> msg.getSenderType() == ChatMessage.SenderType.AI)
+            .anyMatch(msg -> {
+                // This would need to be enhanced to check actual rating data
+                // For now, we'll use a simple heuristic
+                return msg.getContent().toLowerCase().contains("i don't know") ||
+                       msg.getContent().toLowerCase().contains("i can't help") ||
+                       msg.getContent().toLowerCase().contains("contact support");
+            });
+        info.setLowRating(hasLowRating);
+        
         return info;
     }
 
@@ -128,6 +142,7 @@ public class SupportService {
         private java.time.LocalDateTime assignedAt;
         private String customerName;
         private String customerEmail;
+        private boolean lowRating;
 
         // Getters and setters
         public String getChatId() { return chatId; }
@@ -140,6 +155,8 @@ public class SupportService {
         public void setCustomerName(String customerName) { this.customerName = customerName; }
         public String getCustomerEmail() { return customerEmail; }
         public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+        public boolean isLowRating() { return lowRating; }
+        public void setLowRating(boolean lowRating) { this.lowRating = lowRating; }
     }
 
     public static class MessageInfo {

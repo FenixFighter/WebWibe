@@ -3,254 +3,516 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Chat</title>
+    <title>AI Banking Assistant</title>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      .login-form {
-        max-width: 400px;
-        margin: 100px auto;
+
+      .chat-wrapper {
+        width: 100%;
+        max-width: 900px;
+        height: 90vh;
         background: white;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
-      .chat-container {
-        border: 1px solid #ccc;
-        height: 400px;
-        overflow-y: auto;
-        padding: 10px;
-        margin-bottom: 10px;
-      }
-      .message {
-        margin: 10px 0;
-        padding: 10px;
-        border-radius: 5px;
-      }
-      .user-message {
-        background-color: #e3f2fd;
-        text-align: right;
-      }
-      .ai-message {
-        background-color: #f3e5f5;
-      }
-      .support-message {
-        background-color: #e8f5e8;
-      }
-      .system-message {
-        background-color: #fff3e0;
-        font-style: italic;
+
+      .chat-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
         text-align: center;
+        position: relative;
       }
-      .error-message {
-        background-color: #ffebee;
-        color: #c62828;
+
+      .chat-header h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 5px;
       }
-      .form-message {
-        background-color: #e3f2fd;
-        border: 1px solid #bbdefb;
-        border-radius: 8px;
-        padding: 15px;
-        margin: 10px 0;
-        font-size: 14px;
+
+      .connection-status {
+        font-size: 12px;
+        opacity: 0.9;
+        padding: 5px 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        display: inline-block;
       }
-      .form-message h4 {
-        margin: 0 0 10px 0;
+
+      .connection-status.connected {
+        background: rgba(76, 175, 80, 0.8);
+      }
+
+      .connection-status.disconnected {
+        background: rgba(244, 67, 54, 0.8);
+      }
+
+      .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f8f9fa;
+      }
+
+      .message {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-start;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message.user {
+        justify-content: flex-end;
+      }
+
+      .message.ai {
+        justify-content: flex-start;
+      }
+
+      .message.support {
+        justify-content: flex-start;
+      }
+
+      .message.system {
+        justify-content: center;
+      }
+
+      .message-bubble {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        position: relative;
+        word-wrap: break-word;
+      }
+
+      .message.user .message-bubble {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+
+      .message.ai .message-bubble {
+        background: #e3f2fd;
         color: #1976d2;
+        border-bottom-left-radius: 4px;
+      }
+
+      .message.support .message-bubble {
+        background: #e8f5e8;
+        color: #2e7d32;
+        border-bottom-left-radius: 4px;
+      }
+
+      .message.system .message-bubble {
+        background: #fff3e0;
+        color: #f57c00;
+        border-radius: 18px;
+        text-align: center;
+        font-style: italic;
+      }
+
+      .message-time {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-top: 4px;
+      }
+
+      .ai-rating {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .rating-score {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .rating-bar {
+        flex: 1;
+        height: 6px;
+        background: #e0e0e0;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .rating-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+      }
+
+      .rating-fill.excellent {
+        background: #4caf50;
+      }
+      .rating-fill.good {
+        background: #8bc34a;
+      }
+      .rating-fill.fair {
+        background: #ffc107;
+      }
+      .rating-fill.poor {
+        background: #ff9800;
+      }
+      .rating-fill.bad {
+        background: #f44336;
+      }
+
+      .rating-text {
+        font-size: 11px;
+        font-weight: 600;
+        min-width: 40px;
+      }
+
+      .form-message {
+        background: #f0f8ff;
+        border: 2px dashed #2196f3;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+      }
+
+      .form-message h4 {
+        color: #1976d2;
+        margin-bottom: 10px;
         font-size: 16px;
       }
+
       .form-message p {
-        margin: 0 0 10px 0;
         color: #666;
-        font-size: 13px;
+        margin-bottom: 15px;
+        font-size: 14px;
       }
+
       .form-row {
         display: flex;
         gap: 10px;
         align-items: end;
       }
+
       .form-group {
         flex: 1;
       }
+
       .form-group input {
         width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
         font-size: 14px;
+        transition: border-color 0.3s ease;
       }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #2196f3;
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+      }
+
       .update-info-btn {
-        background-color: #2196f3;
+        background: #2196f3;
         color: white;
-        padding: 8px 16px;
         border: none;
-        border-radius: 4px;
+        padding: 10px 16px;
+        border-radius: 8px;
         cursor: pointer;
         font-size: 14px;
-        white-space: nowrap;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
       }
+
       .update-info-btn:hover {
-        background-color: #1976d2;
+        background: #1976d2;
       }
-      .input-container {
+
+      .chat-input-container {
+        padding: 20px;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .input-row {
         display: flex;
         gap: 10px;
+        margin-bottom: 10px;
       }
-      input[type="text"] {
+
+      .category-select {
+        flex: 0 0 200px;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+      }
+
+      .message-input {
         flex: 1;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        padding: 12px 16px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.3s ease;
       }
-      button {
+
+      .message-input:focus {
+        border-color: #2196f3;
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+      }
+
+      .button-row {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+      }
+
+      .btn {
         padding: 10px 20px;
-        background-color: #2196f3;
-        color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 8px;
         cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
       }
-      button:hover {
-        background-color: #1976d2;
+
+      .btn-primary {
+        background: #2196f3;
+        color: white;
       }
-      button:disabled {
-        background-color: #ccc;
+
+      .btn-primary:hover {
+        background: #1976d2;
+      }
+
+      .btn-secondary {
+        background: #ff9800;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #f57c00;
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
         cursor: not-allowed;
       }
-      .status {
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: bold;
+
+      .typing-indicator {
+        display: none;
+        padding: 10px 16px;
+        color: #666;
+        font-style: italic;
+        font-size: 14px;
       }
-      .status.connected {
-        background-color: #4caf50;
-        color: white;
+
+      .typing-indicator.show {
+        display: block;
       }
-      .status.disconnected {
-        background-color: #f44336;
-        color: white;
+
+      .typing-dots {
+        display: inline-block;
+        animation: typing 1.4s infinite;
       }
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
+
+      @keyframes typing {
+        0%,
+        60%,
+        100% {
+          opacity: 0.3;
+        }
+        30% {
+          opacity: 1;
+        }
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .chat-wrapper {
+          height: 100vh;
+          border-radius: 0;
+        }
+
+        .message-bubble {
+          max-width: 85%;
+        }
+
+        .form-row {
+          flex-direction: column;
+        }
+
+        .input-row {
+          flex-direction: column;
+        }
+
+        .category-select {
+          flex: 1;
+        }
       }
     </style>
   </head>
   <body>
-    <!-- Chat Interface -->
-    <div id="chatInterface">
-      <div class="header">
-        <h1>AI Chat</h1>
+    <div class="chat-wrapper">
+      <div class="chat-header">
+        <h1>AI Assistant</h1>
+        <div id="connectionStatus" class="connection-status">Connecting...</div>
       </div>
 
-      <div id="connectionStatus" class="status disconnected">Disconnected</div>
-
-      <div class="chat-container" id="chatContainer">
-        <div id="chatMessages" class="chat-messages"></div>
+      <div id="chatMessages" class="chat-messages">
+        <!-- Messages will be displayed here -->
       </div>
 
-      <div class="input-container">
-        <input
-          type="text"
-          id="messageInput"
-          placeholder="Type your message..."
-          disabled
-        />
-        <button id="sendButton" onclick="sendMessage()" disabled>Send</button>
-      </div>
+      <div class="chat-input-container">
+        <div class="input-row">
+          <select id="categorySelect" class="category-select">
+            <option value="">Select a category...</option>
+          </select>
+          <input
+            type="text"
+            id="messageInput"
+            class="message-input"
+            placeholder="Type your message..."
+            disabled
+          />
+        </div>
 
-      <div style="margin-top: 10px">
-        <label for="categorySelect">Category (optional):</label>
-        <select id="categorySelect">
-          <option value="">Select a category...</option>
-        </select>
-        <button
-          onclick="escalateToSupport()"
-          style="margin-left: 10px; background-color: #ff9800"
-        >
-          Escalate to Support
-        </button>
+        <div class="typing-indicator" id="typingIndicator">
+          <span class="typing-dots">AI is typing</span>
+        </div>
+
+        <div class="button-row">
+          <button id="sendButton" class="btn btn-primary" disabled>
+            Send Message
+          </button>
+          <button
+            id="escalateButton"
+            class="btn btn-secondary"
+            onclick="escalateToSupport()"
+          >
+            Escalate to Support
+          </button>
+        </div>
       </div>
     </div>
 
     <script>
+      // Global variables
       let stompClient = null;
       let chatId = null;
+      let isTyping = false;
+      window.customerName = "";
+      window.customerEmail = "";
 
+      // Initialize chat
+      function initChat() {
+        connect();
+        loadCategories();
+        setupEventListeners();
+      }
+
+      // WebSocket connection
       function connect() {
         const socket = new SockJS("/ws/chat");
         stompClient = Stomp.over(socket);
 
-        stompClient.connect({}, function (frame) {
-          console.log("Connected: " + frame);
-          updateConnectionStatus("Connected", "connected");
+        stompClient.connect(
+          {},
+          function (frame) {
+            console.log("Connected: " + frame);
+            updateConnectionStatus("Connected", "connected");
 
-          // Show customer info form when connected
-          showCustomerInfoForm();
+            // Show customer info form when connected
+            showCustomerInfoForm();
 
-          stompClient.subscribe("/topic/chat", function (message) {
-            const messageData = JSON.parse(message.body);
-            console.log("Received message:", messageData);
-            displayMessage(messageData);
-          });
-        });
+            // Subscribe to messages
+            stompClient.subscribe("/topic/chat", function (message) {
+              const messageData = JSON.parse(message.body);
+              console.log("Received message:", messageData);
+              displayMessage(messageData);
+            });
+          },
+          function (error) {
+            console.error("Connection error:", error);
+            updateConnectionStatus("Disconnected", "disconnected");
+          }
+        );
       }
 
+      // Update connection status
       function updateConnectionStatus(message, className) {
         const statusDiv = document.getElementById("connectionStatus");
         statusDiv.textContent = message;
-        statusDiv.className = "status " + className;
+        statusDiv.className = `connection-status ${className}`;
       }
 
+      // Show customer info form
       function showCustomerInfoForm() {
         const chatMessages = document.getElementById("chatMessages");
 
-        // Check if form already exists
         if (document.getElementById("customerInfoForm")) {
           return;
         }
 
         const formDiv = document.createElement("div");
         formDiv.id = "customerInfoForm";
-        formDiv.className = "message form-message";
+        formDiv.className = "message system";
 
         formDiv.innerHTML = `
-          <h4>Contact Information (Optional)</h4>
-          <p>Help us assist you better by providing your contact details:</p>
-          <div class="form-row">
-            <div class="form-group">
-              <input
-                type="text"
-                id="customerName"
-                placeholder="Your name (optional)"
-              />
-            </div>
-            <div class="form-group">
-              <input
-                type="email"
-                id="customerEmail"
-                placeholder="your.email@example.com (optional)"
-              />
-            </div>
-            <button onclick="updateCustomerInfo()" class="update-info-btn">
-              Update Info
-            </button>
-          </div>
-        `;
+                <div class="message-bubble">
+                    <h4>Contact Information (Optional)</h4>
+                    <p>Help us assist you better by providing your contact details:</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <input type="text" id="customerName" placeholder="Your name (optional)" />
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="customerEmail" placeholder="your.email@example.com (optional)" />
+                        </div>
+                        <button onclick="updateCustomerInfo()" class="update-info-btn">Update Info</button>
+                    </div>
+                </div>
+            `;
 
         chatMessages.appendChild(formDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        scrollToBottom();
       }
 
+      // Update customer info
       function updateCustomerInfo() {
         const customerName = document
           .getElementById("customerName")
@@ -259,20 +521,16 @@
           .getElementById("customerEmail")
           .value.trim();
 
-        // Store customer info for future messages
         window.customerName = customerName;
         window.customerEmail = customerEmail;
 
-        // Show success message
         const form = document.getElementById("customerInfoForm");
         const successMsg = document.createElement("div");
-        successMsg.style.color = "#4caf50";
-        successMsg.style.fontSize = "12px";
-        successMsg.style.marginTop = "5px";
+        successMsg.style.cssText =
+          "color: #4caf50; font-size: 12px; margin-top: 5px;";
         successMsg.textContent = "Contact information updated!";
         form.appendChild(successMsg);
 
-        // Remove success message after 3 seconds
         setTimeout(() => {
           if (successMsg.parentNode) {
             successMsg.parentNode.removeChild(successMsg);
@@ -280,6 +538,7 @@
         }, 3000);
       }
 
+      // Send message
       function sendMessage() {
         const messageInput = document.getElementById("messageInput");
         const categorySelect = document.getElementById("categorySelect");
@@ -302,39 +561,140 @@
             JSON.stringify(chatRequest)
           );
           messageInput.value = "";
+
+          // Show typing indicator
+          showTypingIndicator();
         }
       }
 
+      // Display message
       function displayMessage(messageData) {
         const chatMessages = document.getElementById("chatMessages");
         const messageDiv = document.createElement("div");
-        messageDiv.className = "message";
+
+        // Hide typing indicator
+        hideTypingIndicator();
 
         if (messageData.type === "CHAT_CREATED") {
           chatId = messageData.chatId;
-          messageDiv.className += " system-message";
-          messageDiv.textContent = "Chat created: " + messageData.content;
+          messageDiv.className = "message system";
+          messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        Chat created: ${messageData.content}
+                        <div class="message-time">${formatTime(
+                          messageData.timestamp
+                        )}</div>
+                    </div>
+                `;
         } else if (messageData.type === "MESSAGE") {
-          if (messageData.sender === "USER") {
-            messageDiv.className += " user-message";
-          } else if (messageData.sender === "AI") {
-            messageDiv.className += " ai-message";
-          } else if (messageData.sender === "SUPPORT") {
-            messageDiv.className += " support-message";
+          const senderClass = messageData.sender.toLowerCase();
+          messageDiv.className = `message ${senderClass}`;
+
+          let ratingHtml = "";
+          if (messageData.sender === "AI" && messageData.rating) {
+            ratingHtml = createRatingHtml(messageData.rating);
           }
-          messageDiv.textContent = messageData.content;
+
+          messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        ${messageData.content}
+                        <div class="message-time">${formatTime(
+                          messageData.timestamp
+                        )}</div>
+                        ${ratingHtml}
+                    </div>
+                `;
         } else if (messageData.type === "ESCALATION") {
-          messageDiv.className += " system-message";
-          messageDiv.textContent = messageData.content;
+          messageDiv.className = "message system";
+          messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        ${messageData.content}
+                        <div class="message-time">${formatTime(
+                          messageData.timestamp
+                        )}</div>
+                    </div>
+                `;
         } else if (messageData.type === "ERROR") {
-          messageDiv.className += " error-message";
-          messageDiv.textContent = messageData.content;
+          messageDiv.className = "message system";
+          messageDiv.innerHTML = `
+                    <div class="message-bubble" style="background: #ffebee; color: #c62828;">
+                        ${messageData.content}
+                        <div class="message-time">${formatTime(
+                          messageData.timestamp
+                        )}</div>
+                    </div>
+                `;
         }
 
         chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        scrollToBottom();
       }
 
+      // Create rating HTML
+      function createRatingHtml(rating) {
+        const score = rating.score || 0;
+        const answer = rating.answer || "";
+
+        let ratingClass = "bad";
+        if (score >= 80) ratingClass = "excellent";
+        else if (score >= 60) ratingClass = "good";
+        else if (score >= 40) ratingClass = "fair";
+        else if (score >= 20) ratingClass = "poor";
+
+        return `
+                <div class="ai-rating">
+                    <div class="rating-score">
+                        <span class="rating-text">${score}/100</span>
+                        <div class="rating-bar">
+                            <div class="rating-fill ${ratingClass}" style="width: ${score}%"></div>
+                        </div>
+                    </div>
+                    ${
+                      answer
+                        ? `<div style="font-size: 11px; color: #666; margin-top: 4px;">${answer}</div>`
+                        : ""
+                    }
+                </div>
+            `;
+      }
+
+      // Show typing indicator
+      function showTypingIndicator() {
+        if (!isTyping) {
+          isTyping = true;
+          document.getElementById("typingIndicator").classList.add("show");
+          scrollToBottom();
+        }
+      }
+
+      // Hide typing indicator
+      function hideTypingIndicator() {
+        if (isTyping) {
+          isTyping = false;
+          document.getElementById("typingIndicator").classList.remove("show");
+        }
+      }
+
+      // Escalate to support
+      function escalateToSupport() {
+        if (stompClient && chatId) {
+          const chatRequest = {
+            type: "ESCALATION",
+            chatId: chatId,
+            message: "Customer requested escalation to support.",
+          };
+          stompClient.send(
+            "/app/chat.escalate",
+            {},
+            JSON.stringify(chatRequest)
+          );
+          alert("Your chat has been escalated to support!");
+        } else {
+          alert("Please start a chat before escalating.");
+        }
+      }
+
+      // Load categories
       function loadCategories() {
         fetch("/api/categories")
           .then((response) => response.json())
@@ -354,22 +714,38 @@
           });
       }
 
-      // Allow sending message on Enter key
-      document
-        .getElementById("messageInput")
-        .addEventListener("keypress", function (e) {
+      // Setup event listeners
+      function setupEventListeners() {
+        const messageInput = document.getElementById("messageInput");
+        const sendButton = document.getElementById("sendButton");
+
+        messageInput.addEventListener("keypress", function (e) {
           if (e.key === "Enter") {
             sendMessage();
           }
         });
 
-      // Auto-connect and load categories when page loads
-      connect();
-      loadCategories();
+        sendButton.addEventListener("click", sendMessage);
 
-      // Enable input when connected
-      document.getElementById("messageInput").disabled = false;
-      document.getElementById("sendButton").disabled = false;
+        // Enable input when connected
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+      }
+
+      // Utility functions
+      function formatTime(timestamp) {
+        if (!timestamp) return "";
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString();
+      }
+
+      function scrollToBottom() {
+        const chatMessages = document.getElementById("chatMessages");
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      // Initialize when page loads
+      document.addEventListener("DOMContentLoaded", initChat);
     </script>
   </body>
 </html>

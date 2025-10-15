@@ -85,13 +85,12 @@ public class ChatManagementService {
      * Notifies support about new chat activity
      */
     public void notifySupportAboutChat(String chatId, String message) {
-        WebSocketMessage notification = new WebSocketMessage(
-            "CHAT_ACTIVITY", 
-            chatId, 
-            "SYSTEM",
-            "New message in chat: " + message.substring(0, Math.min(message.length(), 50)) + "...",
-            System.currentTimeMillis()
-        );
+        WebSocketMessage notification = new WebSocketMessage();
+        notification.setType("CHAT_ACTIVITY");
+        notification.setChatId(chatId);
+        notification.setSender("SYSTEM");
+        notification.setContent("New message in chat: " + message.substring(0, Math.min(message.length(), 50)) + "...");
+        notification.setTimestamp(System.currentTimeMillis());
         messagingTemplate.convertAndSend("/topic/support/activity", notification);
     }
 
