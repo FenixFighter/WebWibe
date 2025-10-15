@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: ww2-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ww2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ww2-app:
+    build: .
+    container_name: ww2-application
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_AI_OPENAI_API_KEY: sk-DaEm7ghnNnWtYjrc3eiEug
+      SPRING_AI_OPENAI_BASE_URL: http://45.145.191.148:4000/v1
+      SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL: Qwen2.5-72B-Instruct-AWQ
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ww2-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  ww2-network:
+    driver: bridge

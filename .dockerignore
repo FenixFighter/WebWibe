@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+gradle/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Runtime
+target/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+*.md
+HELP.md
+README.md
+
+# Test files
+test_api.ps1
