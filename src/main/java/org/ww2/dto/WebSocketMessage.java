@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +17,7 @@ public class WebSocketMessage {
     private String sender;
     private Long timestamp;
     private AiRating rating; // AI response rating
+    private List<String> suggestions; // AI response suggestions
     
     public static WebSocketMessage createUserMessage(String chatId, String content) {
         WebSocketMessage message = new WebSocketMessage();

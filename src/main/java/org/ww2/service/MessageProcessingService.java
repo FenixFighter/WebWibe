@@ -4,27 +4,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.ww2.dto.ChatRequest;
-import org.ww2.dto.QuestionRequest;
-import org.ww2.dto.QuestionResponse;
-import org.ww2.entity.ChatMessage;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import org.ww2.dto.AiResponseWithSuggestions;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MessageProcessingService {
 
-    private final ChatService chatService;
     private final AiService aiService;
-    private final QuestionProcessingService questionProcessingService;
     private final ChatAssignmentService chatAssignmentService;
 
     /**
-     * Processes customer message and returns AI response
+     * Processes customer message and returns AI response with suggestions
      */
-    public String processCustomerMessage(String chatId, String message, ChatRequest request) {
+    public AiResponseWithSuggestions processCustomerMessage(String chatId, String message, ChatRequest request) {
         // Check if chat is assigned to support - if yes, don't use AI
         var assignment = chatAssignmentService.getChatAssignment(chatId);
         if (assignment.isPresent()) {
@@ -32,46 +25,21 @@ public class MessageProcessingService {
             return null; // Don't use AI when support is active
         }
 
-        // Get AI response using QuestionProcessingService if category is provided
-        if (request.getCategory() != null && !request.getCategory().trim().isEmpty()) {
-            return processStructuredQuestion(message, request.getCategory());
-        } else {
-            return processGeneralQuestion(chatId, message);
-        }
-    }
-
-    /**
-     * Processes structured question with category
-     */
-    private String processStructuredQuestion(String message, String category) {
-        QuestionRequest questionRequest = new QuestionRequest();
-        questionRequest.setCategory(category);
-        questionRequest.setMessage(message);
-        
-        QuestionResponse questionResponse = questionProcessingService.processQuestion(questionRequest);
-        return questionResponse.getAnswer();
-    }
-
-    /**
-     * Processes general question with chat history
-     */
-    private String processGeneralQuestion(String chatId, String message) {
-        List<ChatMessage> chatHistory = chatService.getChatHistory(chatId);
-        String historyContext = buildHistoryContext(chatHistory);
-        return aiService.processQuestion(message, historyContext);
-    }
-
-    /**
-     * Builds context from chat history
-     */
-    private String buildHistoryContext(List<ChatMessage> chatHistory) {
-        if (chatHistory.isEmpty()) {
-            return "";
+        // NEW IMPLEMENTATION: Use data source search with suggestions for all questions
+        String category = request.getCategory();
+        if (category == null || category.trim().isEmpty()) {
+            category = null; // Will be passed as null to AI for general search
         }
         
-        return chatHistory.stream()
-                .map(msg -> msg.getSenderType() + ": " + msg.getContent())
-                .collect(Collectors.joining("\n"));
+        log.info("Processing question with data source search and suggestions, category: {}", category);
+        return processQuestionWithDataSource(message, category);
+    }
+
+    /**
+     * Processes question with data source search and suggestions (main implementation)
+     */
+    private AiResponseWithSuggestions processQuestionWithDataSource(String message, String category) {
+        return aiService.processQuestionWithDataSource(message, category);
     }
 
     /**

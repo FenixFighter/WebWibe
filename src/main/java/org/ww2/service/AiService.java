@@ -1,25 +1,21 @@
 package org.ww2.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.ww2.dto.AiResponseWithSuggestions;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AiService {
     
     private final WebClient webClient;
-    
-    @Value("${spring.ai.openai.api-key}")
-    private String apiKey;
-    
-    @Value("${spring.ai.openai.base-url}")
-    private String baseUrl;
-    
-    @Value("${spring.ai.openai.chat.options.model}")
-    private String model;
     
     public AiService() {
         this.webClient = WebClient.builder()
@@ -29,76 +25,31 @@ public class AiService {
             .build();
     }
     
-    /**
-     * Определяет наиболее подходящую подкатегорию на основе вопроса и списка доступных подкатегорий
-     */
-    public String findBestSubcategory(String question, List<String> subcategories) {
-        System.out.println("=== AI Service: findBestSubcategory ===");
-        System.out.println("Question: " + question);
-        System.out.println("Subcategories: " + subcategories);
-        
-        if (subcategories == null || subcategories.isEmpty()) {
-            System.out.println("No subcategories provided");
-            return null;
-        }
-        
-        String subcategoriesList = String.join(", ", subcategories);
-        
-        String prompt = String.format(
-            "Based on the user question: \"%s\"\n" +
-            "Choose the most relevant subcategory from this list: %s\n",
-            question, subcategoriesList
-        );
-        
-        System.out.println("Prompt for AI: " + prompt);
-        String result = callAiApi(prompt);
-        System.out.println("AI response: " + result);
-        return result;
-    }
+    
     
     /**
-     * Обрабатывает вопрос пользователя с учетом контекста истории чата
+     * Новая реализация: обрабатывает вопрос с поиском по системным меткам [DATA_SOURCE]
+     * @param question - вопрос пользователя
+     * @param category - категория (может быть null, используется как направление для AI)
+     * @return структурированный ответ AI с подсказками
      */
-    public String processQuestion(String question, String chatHistory) {
-        System.out.println("=== AI Service: processQuestion ===");
+    public AiResponseWithSuggestions processQuestionWithDataSource(String question, String category) {
+        System.out.println("=== AI Service: processQuestionWithDataSource ===");
         System.out.println("Question: " + question);
-        System.out.println("Chat History: " + chatHistory);
+        System.out.println("Category: " + category);
         
-        String contextPrompt = buildContextPrompt(question, chatHistory);
-        System.out.println("Context prompt: " + contextPrompt);
+        // Строим промпт для поиска ответа и подсказок по системным меткам
+        String searchPrompt = buildDataSourceSearchWithSuggestionsPrompt(question, category);
+        System.out.println("Data source search with suggestions prompt: " + searchPrompt);
         
-        String result = callAiApi(contextPrompt);
+        String result = callAiApi(searchPrompt);
         System.out.println("AI response: " + result);
-        return result;
+        
+        // Парсим ответ для извлечения основного ответа и подсказок
+        return parseAiResponseWithSuggestions(result);
     }
     
-    /**
-     * Находит наиболее релевантный ответ из списка шаблонных ответов
-     */
-    public String findBestAnswer(String question, List<String> templateMessages) {
-        System.out.println("=== AI Service: findBestAnswer ===");
-        System.out.println("Question: " + question);
-        System.out.println("Template messages: " + templateMessages);
-        
-        if (templateMessages == null || templateMessages.isEmpty()) {
-            System.out.println("No template messages provided");
-            return "No relevant answer found.";
-        }
-        
-        String messagesList = String.join("\n---\n", templateMessages);
-        
-        String prompt = String.format(
-            "Based on the user question: \"%s\"\n" +
-            "Choose the most relevant answer from these template responses:\n\n%s\n\n" +
-            "Return only the most appropriate answer text, nothing else. " +
-            question, messagesList
-        );
-        
-        System.out.println("Prompt for AI: " + prompt);
-        String result = callAiApi(prompt);
-        System.out.println("AI response: " + result);
-        return result;
-    }
+    
     
     private String callAiApi(String prompt) {
         System.out.println("=== AI Service: callAiApi ===");
@@ -196,22 +147,118 @@ public class AiService {
         return "To apply for a credit card, please visit our nearest branch with your ID and proof of income.";
     }
     
-    private String buildContextPrompt(String question, String chatHistory) {
+    
+    /**
+     * Строит промпт для поиска по системным меткам [DATA_SOURCE]
+     */
+    private String buildDataSourceSearchPrompt(String question, String category) {
         StringBuilder prompt = new StringBuilder();
         
-        prompt.append("You are a helpful banking assistant. Please answer the user's question based on the context provided.\n\n");
+        prompt.append("You are an AI assistant with access to a knowledge base containing banking information.\n");
+        prompt.append("Your task is to search through your internal knowledge base for the most relevant answer.\n\n");
         
-        if (chatHistory != null && !chatHistory.trim().isEmpty()) {
-            prompt.append("Previous conversation context:\n");
-            prompt.append(chatHistory);
-            prompt.append("\n\n");
+        prompt.append("IMPORTANT: Look for responses that contain the special marker [DATA_SOURCE] in your knowledge base.\n");
+        prompt.append("These are verified, high-quality responses that should be prioritized.\n\n");
+        
+        if (category != null && !category.trim().isEmpty()) {
+            prompt.append("Question category/direction: ").append(category).append("\n");
+            prompt.append("Use this as a hint for the type of banking service the user is asking about.\n\n");
         }
         
-        prompt.append("Current user question: ");
-        prompt.append(question);
-        prompt.append("\n\n");
-        prompt.append("Please provide a helpful and accurate response. If you need more information, ask clarifying questions.");
+        prompt.append("User question: ").append(question).append("\n\n");
+        
+        prompt.append("Instructions:\n");
+        prompt.append("1. Search your knowledge base for responses marked with [DATA_SOURCE]\n");
+        prompt.append("2. Find the most relevant answer based on the user's question\n");
+        prompt.append("3. If you find a relevant [DATA_SOURCE] response, use it as your answer\n");
+        prompt.append("4. If no [DATA_SOURCE] response is relevant, provide a general helpful response\n");
+        prompt.append("5. Always be professional and accurate in your banking advice\n\n");
+        
+        prompt.append("Please provide the most appropriate response from your knowledge base.");
         
         return prompt.toString();
+    }
+    
+    /**
+     * Строит промпт для поиска ответа и подсказок по системным меткам [DATA_SOURCE]
+     */
+    private String buildDataSourceSearchWithSuggestionsPrompt(String question, String category) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("You are an AI assistant with access to a knowledge base containing banking information.\n");
+        prompt.append("Your task is to search through your internal knowledge base for the most relevant answer AND related suggestions.\n\n");
+        
+        prompt.append("IMPORTANT: Look for responses that contain the special marker [DATA_SOURCE] in your knowledge base.\n");
+        prompt.append("These are verified, high-quality responses that should be prioritized.\n\n");
+        
+        if (category != null && !category.trim().isEmpty()) {
+            prompt.append("Question category/direction: ").append(category).append("\n");
+            prompt.append("Use this as a hint for the type of banking service the user is asking about.\n\n");
+        }
+        
+        prompt.append("User question: ").append(question).append("\n\n");
+        
+        prompt.append("Instructions:\n");
+        prompt.append("1. Search your knowledge base for responses marked with [DATA_SOURCE]\n");
+        prompt.append("2. Find the most relevant answer based on the user's question\n");
+        prompt.append("3. Also find related questions/suggestions marked with [DATA_SOURCE]\n");
+        prompt.append("4. If you find relevant [DATA_SOURCE] responses, use them as your answer and suggestions\n");
+        prompt.append("5. If no [DATA_SOURCE] responses are relevant, provide general helpful response and suggestions\n");
+        prompt.append("6. Always be professional and accurate in your banking advice\n\n");
+        
+        prompt.append("Please provide your response in the following format:\n");
+        prompt.append("ANSWER: [Your main answer here]\n");
+        prompt.append("SUGGESTIONS: [Related question 1] | [Related question 2] | [Related question 3]\n\n");
+        prompt.append("Note: Only include suggestions that are marked with [DATA_SOURCE] in your knowledge base.");
+        
+        return prompt.toString();
+    }
+    
+    /**
+     * Парсит ответ AI для извлечения основного ответа и подсказок
+     */
+    private AiResponseWithSuggestions parseAiResponseWithSuggestions(String aiResponse) {
+        System.out.println("=== Parsing AI Response with Suggestions ===");
+        System.out.println("Raw AI response: " + aiResponse);
+        
+        String answer = "";
+        List<String> suggestions = new ArrayList<>();
+        
+        try {
+            // Ищем основной ответ
+            Pattern answerPattern = Pattern.compile("ANSWER:\\s*(.+?)(?=SUGGESTIONS:|$)", Pattern.DOTALL);
+            Matcher answerMatcher = answerPattern.matcher(aiResponse);
+            if (answerMatcher.find()) {
+                answer = answerMatcher.group(1).trim();
+            } else {
+                // Если формат не найден, используем весь ответ как основной ответ
+                answer = aiResponse.trim();
+            }
+            
+            // Ищем подсказки
+            Pattern suggestionsPattern = Pattern.compile("SUGGESTIONS:\\s*(.+?)$", Pattern.DOTALL);
+            Matcher suggestionsMatcher = suggestionsPattern.matcher(aiResponse);
+            if (suggestionsMatcher.find()) {
+                String suggestionsText = suggestionsMatcher.group(1).trim();
+                // Разделяем подсказки по символу |
+                String[] suggestionArray = suggestionsText.split("\\|");
+                for (String suggestion : suggestionArray) {
+                    String trimmedSuggestion = suggestion.trim();
+                    if (!trimmedSuggestion.isEmpty()) {
+                        suggestions.add(trimmedSuggestion);
+                    }
+                }
+            }
+            
+            System.out.println("Parsed answer: " + answer);
+            System.out.println("Parsed suggestions: " + suggestions);
+            
+        } catch (Exception e) {
+            System.out.println("Error parsing AI response: " + e.getMessage());
+            // Fallback: используем весь ответ как основной ответ
+            answer = aiResponse.trim();
+        }
+        
+        return new AiResponseWithSuggestions(answer, suggestions);
     }
 }

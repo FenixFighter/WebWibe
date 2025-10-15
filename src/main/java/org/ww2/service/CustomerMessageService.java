@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.ww2.dto.ChatRequest;
 import org.ww2.dto.WebSocketMessage;
 import org.ww2.dto.AiRating;
+import org.ww2.dto.AiResponseWithSuggestions;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +30,8 @@ public class CustomerMessageService {
         WebSocketMessage userMessage = WebSocketMessage.createUserMessage(chatId, message);
         messagingTemplate.convertAndSend("/topic/chat", userMessage);
         
-        // Process message and get AI response
-        String aiResponse = messageProcessingService.processCustomerMessage(chatId, message, request);
+        // Process message and get AI response with suggestions
+        AiResponseWithSuggestions aiResponse = messageProcessingService.processCustomerMessage(chatId, message, request);
         
         if (aiResponse == null) {
             return; // No response needed
@@ -38,24 +39,32 @@ public class CustomerMessageService {
         
         // AI ALWAYS responds - no escalation, no exceptions
         // Evaluate AI response and save with rating
-        AiRating rating = aiRatingService.evaluateAiResponse(message, aiResponse);
-        saveAndSendAiResponseWithRating(chatId, aiResponse, rating);
+        AiRating rating = aiRatingService.evaluateAiResponse(message, aiResponse.getAnswer());
+        saveAndSendAiResponseWithRatingAndSuggestions(chatId, aiResponse, rating);
         
         // Low ratings are only used for visual indicators in support dashboard
     }
 
 
     /**
-     * Saves AI message and sends it to client with rating
+     * Saves AI message and sends it to client with rating and suggestions
      */
-    private void saveAndSendAiResponseWithRating(String chatId, String aiResponse, AiRating rating) {
+    private void saveAndSendAiResponseWithRatingAndSuggestions(String chatId, AiResponseWithSuggestions aiResponse, AiRating rating) {
         // Save AI message
-        chatService.saveAiMessage(chatId, aiResponse);
+        chatService.saveAiMessage(chatId, aiResponse.getAnswer());
         
-        // Send AI response to client with rating
-        WebSocketMessage aiMessage = aiRatingService.createAiMessageWithRating(chatId, aiResponse, rating);
+        // Create WebSocket message with rating and suggestions
+        WebSocketMessage aiMessage = new WebSocketMessage();
+        aiMessage.setType("MESSAGE");
+        aiMessage.setChatId(chatId);
+        aiMessage.setContent(aiResponse.getAnswer());
+        aiMessage.setSender("AI");
+        aiMessage.setTimestamp(System.currentTimeMillis());
+        aiMessage.setRating(rating);
+        aiMessage.setSuggestions(aiResponse.getSuggestions());
+        
         messagingTemplate.convertAndSend("/topic/chat", aiMessage);
         
-        log.info("AI response sent for chat {} with rating {}/100", chatId, rating.getScore());
+        log.info("AI response with suggestions sent for chat {} with rating {}/100", chatId, rating.getScore());
     }
 }

@@ -197,6 +197,44 @@
         min-width: 40px;
       }
 
+      .ai-suggestions {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: rgba(240, 248, 255, 0.9);
+        border-radius: 12px;
+        border: 1px solid #e0f2ff;
+      }
+
+      .suggestions-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #1976d2;
+        margin-bottom: 6px;
+      }
+
+      .suggestions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .suggestion-item {
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid #e0f2ff;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #1976d2;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .suggestion-item:hover {
+        background: rgba(25, 118, 210, 0.1);
+        border-color: #1976d2;
+        transform: translateY(-1px);
+      }
+
       .form-message {
         background: #f0f8ff;
         border: 2px dashed #2196f3;
@@ -595,6 +633,15 @@
             ratingHtml = createRatingHtml(messageData.rating);
           }
 
+          let suggestionsHtml = "";
+          if (
+            messageData.sender === "AI" &&
+            messageData.suggestions &&
+            messageData.suggestions.length > 0
+          ) {
+            suggestionsHtml = createSuggestionsHtml(messageData.suggestions);
+          }
+
           messageDiv.innerHTML = `
                     <div class="message-bubble">
                         ${messageData.content}
@@ -602,6 +649,7 @@
                           messageData.timestamp
                         )}</div>
                         ${ratingHtml}
+                        ${suggestionsHtml}
                     </div>
                 `;
         } else if (messageData.type === "ESCALATION") {
@@ -656,6 +704,36 @@
                     }
                 </div>
             `;
+      }
+
+      // Create suggestions HTML
+      function createSuggestionsHtml(suggestions) {
+        if (!suggestions || suggestions.length === 0) return "";
+
+        const suggestionsList = suggestions
+          .map(
+            (suggestion) =>
+              `<div class="suggestion-item" onclick="sendSuggestion('${suggestion.replace(
+                /'/g,
+                "\\'"
+              )}')">${suggestion}</div>`
+          )
+          .join("");
+
+        return `
+                <div class="ai-suggestions">
+                    <div class="suggestions-title">💡 Related questions:</div>
+                    <div class="suggestions-list">
+                        ${suggestionsList}
+                    </div>
+                </div>
+            `;
+      }
+
+      // Send suggestion as message
+      function sendSuggestion(suggestion) {
+        document.getElementById("messageInput").value = suggestion;
+        sendMessage();
       }
 
       // Show typing indicator
