@@ -46,13 +46,28 @@ public class AiService {
         
         String prompt = String.format(
             "Based on the user question: \"%s\"\n" +
-            "Choose the most relevant subcategory from this list: %s\n" +
-            "Return only the exact subcategory name, nothing else.",
+            "Choose the most relevant subcategory from this list: %s\n",
             question, subcategoriesList
         );
         
         System.out.println("Prompt for AI: " + prompt);
         String result = callAiApi(prompt);
+        System.out.println("AI response: " + result);
+        return result;
+    }
+    
+    /**
+     * Обрабатывает вопрос пользователя с учетом контекста истории чата
+     */
+    public String processQuestion(String question, String chatHistory) {
+        System.out.println("=== AI Service: processQuestion ===");
+        System.out.println("Question: " + question);
+        System.out.println("Chat History: " + chatHistory);
+        
+        String contextPrompt = buildContextPrompt(question, chatHistory);
+        System.out.println("Context prompt: " + contextPrompt);
+        
+        String result = callAiApi(contextPrompt);
         System.out.println("AI response: " + result);
         return result;
     }
@@ -76,7 +91,6 @@ public class AiService {
             "Based on the user question: \"%s\"\n" +
             "Choose the most relevant answer from these template responses:\n\n%s\n\n" +
             "Return only the most appropriate answer text, nothing else. " +
-            "If no answer is suitable, return 'No suitable answer found.'",
             question, messagesList
         );
         
@@ -180,5 +194,24 @@ public class AiService {
         }
         
         return "To apply for a credit card, please visit our nearest branch with your ID and proof of income.";
+    }
+    
+    private String buildContextPrompt(String question, String chatHistory) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("You are a helpful banking assistant. Please answer the user's question based on the context provided.\n\n");
+        
+        if (chatHistory != null && !chatHistory.trim().isEmpty()) {
+            prompt.append("Previous conversation context:\n");
+            prompt.append(chatHistory);
+            prompt.append("\n\n");
+        }
+        
+        prompt.append("Current user question: ");
+        prompt.append(question);
+        prompt.append("\n\n");
+        prompt.append("Please provide a helpful and accurate response. If you need more information, ask clarifying questions.");
+        
+        return prompt.toString();
     }
 }

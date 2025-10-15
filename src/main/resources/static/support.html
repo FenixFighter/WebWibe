@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .header {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .login-form {
+        max-width: 400px;
+        margin: 100px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .dashboard {
+        display: none;
+      }
+      .chat-list {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 20px;
+      }
+      .chat-rooms {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .chat-room {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .chat-room:hover {
+        background-color: #f8f9fa;
+      }
+      .chat-room.active {
+        background-color: #e3f2fd;
+        border-color: #2196f3;
+      }
+      .chat-room.assigned {
+        background-color: #fff3e0;
+        border-color: #ff9800;
+      }
+      .chat-room.escalated {
+        background-color: #ffebee;
+        border-color: #f44336;
+      }
+      .chat-container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: none;
+      }
+      .chat-container.active {
+        display: block;
+      }
+      .chat-messages {
+        height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #fafafa;
+      }
+      .message {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 8px;
+        max-width: 80%;
+      }
+      .user-message {
+        background-color: #e3f2fd;
+        margin-left: auto;
+      }
+      .ai-message {
+        background-color: #f3e5f5;
+      }
+      .support-message {
+        background-color: #e8f5e8;
+      }
+      .system-message {
+        background-color: #fff3e0;
+        font-style: italic;
+        text-align: center;
+      }
+      .input-container {
+        display: flex;
+        gap: 10px;
+      }
+      input[type="text"] {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #1976d2;
+      }
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+      .status {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .status.online {
+        background-color: #4caf50;
+        color: white;
+      }
+      .status.offline {
+        background-color: #f44336;
+        color: white;
+      }
+      .room-info {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+      .escalation-badge {
+        background-color: #f44336;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 10px;
+        margin-left: 5px;
+      }
+      .customer-info {
+        margin: 5px 0;
+        padding: 5px;
+        background-color: #f0f0f0;
+        border-radius: 3px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Login Form -->
+      <div id="loginForm" class="login-form">
+        <h2>Support Login</h2>
+        <form id="loginFormElement">
+          <div style="margin-bottom: 15px">
+            <label for="username">Username:</label>
+            <input type="text" id="username" required />
+          </div>
+          <div style="margin-bottom: 15px">
+            <label for="password">Password:</label>
+            <input type="password" id="password" required />
+          </div>
+          <button type="submit">Login</button>
+        </form>
+        <div
+          id="loginError"
+          style="color: red; margin-top: 10px; display: none"
+        ></div>
+      </div>
+
+      <!-- Dashboard -->
+      <div id="dashboard" class="dashboard">
+        <div class="header">
+          <h2>Support Dashboard</h2>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <div>
+              <span>Welcome, <span id="supportUsername"></span></span>
+              <span id="status" class="status offline">Offline</span>
+            </div>
+            <button onclick="logout()">Logout</button>
+          </div>
+        </div>
+
+        <div class="chat-list">
+          <div class="chat-rooms">
+            <h3>Active Chats</h3>
+            <div id="chatRoomsList">
+              <!-- Chat rooms will be loaded here -->
+            </div>
+          </div>
+
+          <div id="chatContainer" class="chat-container">
+            <h3>Chat: <span id="currentChatId"></span></h3>
+            <div id="chatMessages" class="chat-messages"></div>
+            <div class="input-container">
+              <input
+                type="text"
+                id="messageInput"
+                placeholder="Type your message..."
+                disabled
+              />
+              <button id="sendButton" onclick="sendMessage()" disabled>
+                Send
+              </button>
+              <button
+                id="releaseButton"
+                onclick="releaseChat()"
+                disabled
+                style="background-color: #f44336; margin-left: 10px"
+              >
+                Release Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let stompClient = null;
+      let currentUser = null;
+      let currentChatId = null;
+      let assignedChats = new Set();
+
+      // Login functionality
+      document
+        .getElementById("loginFormElement")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          try {
+            const response = await fetch("/api/auth/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ username, password }),
+            });
+
+            if (response.ok) {
+              const authData = await response.json();
+              if (authData.role === "SUPPORT") {
+                currentUser = authData;
+                showDashboard();
+                connectWebSocket();
+                loadAssignedChats();
+              } else {
+                showLoginError("Access denied. Support role required.");
+              }
+            } else {
+              showLoginError("Invalid credentials");
+            }
+          } catch (error) {
+            showLoginError("Login failed: " + error.message);
+          }
+        });
+
+      function showLoginError(message) {
+        const errorDiv = document.getElementById("loginError");
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+      }
+
+      function showDashboard() {
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        document.getElementById("supportUsername").textContent =
+          currentUser.username;
+      }
+
+      function logout() {
+        if (stompClient) {
+          stompClient.disconnect();
+        }
+        currentUser = null;
+        document.getElementById("loginForm").style.display = "block";
+        document.getElementById("dashboard").style.display = "none";
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+        document.getElementById("loginError").style.display = "none";
+      }
+
+      // WebSocket connection
+      function connectWebSocket() {
+        const socket = new SockJS("/ws/chat");
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+          console.log("Connected: " + frame);
+          updateStatus("Online", "online");
+
+          // Subscribe to support messages
+          stompClient.subscribe("/topic/chat", function (message) {
+            const messageData = JSON.parse(message.body);
+            handleSupportMessage(messageData);
+          });
+
+          // Subscribe to chat activity notifications
+          stompClient.subscribe("/topic/support/activity", function (message) {
+            const messageData = JSON.parse(message.body);
+            console.log("New chat activity:", messageData);
+            // Reload chats when new activity is detected
+            loadAssignedChats();
+          });
+        });
+      }
+
+      function updateStatus(message, className) {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+        statusDiv.className = "status " + className;
+      }
+
+      // Load all chats
+      async function loadAssignedChats() {
+        try {
+          const response = await fetch("/api/support/all-chats", {
+            headers: {
+              Authorization: "Bearer " + currentUser.token,
+            },
+          });
+
+          if (response.ok) {
+            const chats = await response.json();
+            displayChatRooms(chats);
+          }
+        } catch (error) {
+          console.error("Error loading all chats:", error);
+        }
+      }
+
+      function displayChatRooms(chats) {
+        const chatRoomsList = document.getElementById("chatRoomsList");
+        chatRoomsList.innerHTML = "";
+
+        chats.forEach((chat) => {
+          const roomDiv = document.createElement("div");
+          roomDiv.className = "chat-room";
+          roomDiv.onclick = () => openChat(chat.chatId);
+
+          const customerInfo =
+            chat.customerName || chat.customerEmail
+              ? `<div class="customer-info">
+                 ${
+                   chat.customerName
+                     ? `<strong>${chat.customerName}</strong>`
+                     : ""
+                 }
+                 ${
+                   chat.customerEmail
+                     ? `<br><small>${chat.customerEmail}</small>`
+                     : ""
+                 }
+               </div>`
+              : '<div class="customer-info"><small>Anonymous customer</small></div>';
+
+          roomDiv.innerHTML = `
+                    <div><strong>Chat: ${chat.chatId.substring(
+                      0,
+                      8
+                    )}...</strong></div>
+                    ${customerInfo}
+                    <div class="room-info">
+                         Status: ${chat.status}
+                         ${
+                           chat.status === "ESCALATED"
+                             ? '<span class="escalation-badge">ESCALATED</span>'
+                             : ""
+                         }
+                    </div>
+                    <button onclick="assignChat('${
+                      chat.chatId
+                    }')" style="margin-top: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer;">Assign to Me</button>
+                `;
+
+          chatRoomsList.appendChild(roomDiv);
+        });
+      }
+
+      function openChat(chatId) {
+        currentChatId = chatId;
+        document.getElementById("currentChatId").textContent = chatId;
+        document.getElementById("chatContainer").classList.add("active");
+        document.getElementById("messageInput").disabled = false;
+        document.getElementById("sendButton").disabled = false;
+        document.getElementById("releaseButton").disabled = false;
+
+        // Load chat history
+        loadChatHistory(chatId);
+      }
+
+      async function loadChatHistory(chatId) {
+        try {
+          const response = await fetch(`/api/support/chat-history/${chatId}`, {
+            headers: {
+              Authorization: "Bearer " + currentUser.token,
+            },
+          });
+
+          if (response.ok) {
+            const messages = await response.json();
+            displayMessages(messages);
+          }
+        } catch (error) {
+          console.error("Error loading chat history:", error);
+        }
+      }
+
+      function displayMessages(messages) {
+        const chatMessages = document.getElementById("chatMessages");
+        chatMessages.innerHTML = "";
+
+        messages.forEach((message) => {
+          const messageDiv = document.createElement("div");
+          messageDiv.className = "message";
+
+          if (message.senderType === "USER") {
+            messageDiv.className += " user-message";
+          } else if (message.senderType === "AI") {
+            messageDiv.className += " ai-message";
+          } else if (message.senderType === "SUPPORT") {
+            messageDiv.className += " support-message";
+          }
+
+          messageDiv.innerHTML = `<strong>${message.senderType}:</strong> ${message.content}`;
+          chatMessages.appendChild(messageDiv);
+        });
+
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function sendMessage() {
+        const messageInput = document.getElementById("messageInput");
+        const message = messageInput.value.trim();
+
+        if (message && stompClient && currentChatId) {
+          const chatRequest = {
+            type: "MESSAGE",
+            chatId: currentChatId,
+            message: message,
+            token: currentUser.token,
+          };
+
+          stompClient.send(
+            "/app/chat.sendMessage",
+            {},
+            JSON.stringify(chatRequest)
+          );
+          messageInput.value = "";
+        }
+      }
+
+      async function assignChat(chatId) {
+        try {
+          const response = await fetch(`/api/support/assign-chat/${chatId}`, {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + currentUser.token,
+            },
+          });
+
+          if (response.ok) {
+            alert("Chat assigned to you successfully!");
+            loadAssignedChats(); // Reload the list
+          } else {
+            const errorData = await response.json();
+            alert("Error assigning chat: " + errorData.message);
+          }
+        } catch (error) {
+          console.error("Error assigning chat:", error);
+          alert("Error assigning chat: " + error.message);
+        }
+      }
+
+      function releaseChat() {
+        if (stompClient && currentChatId) {
+          const chatRequest = {
+            type: "RELEASE",
+            chatId: currentChatId,
+            token: currentUser.token,
+          };
+
+          stompClient.send(
+            "/app/chat.release",
+            {},
+            JSON.stringify(chatRequest)
+          );
+
+          // Close the chat
+          document.getElementById("chatContainer").classList.remove("active");
+          document.getElementById("messageInput").disabled = true;
+          document.getElementById("sendButton").disabled = true;
+          document.getElementById("releaseButton").disabled = true;
+          currentChatId = null;
+
+          alert("Chat released! AI assistant is now available for this chat.");
+        }
+      }
+
+      function handleSupportMessage(messageData) {
+        if (messageData.chatId === currentChatId) {
+          // Add message to current chat
+          const chatMessages = document.getElementById("chatMessages");
+          const messageDiv = document.createElement("div");
+          messageDiv.className = "message";
+
+          if (messageData.sender === "USER") {
+            messageDiv.className += " user-message";
+          } else if (messageData.sender === "AI") {
+            messageDiv.className += " ai-message";
+          } else if (messageData.sender === "SUPPORT") {
+            messageDiv.className += " support-message";
+          } else if (messageData.sender === "SYSTEM") {
+            messageDiv.className += " system-message";
+          }
+
+          messageDiv.innerHTML = `<strong>${messageData.sender}:</strong> ${messageData.content}`;
+          chatMessages.appendChild(messageDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      }
+
+      // Allow sending message on Enter key
+      document
+        .getElementById("messageInput")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            sendMessage();
+          }
+        });
+    </script>
+  </body>
+</html>
