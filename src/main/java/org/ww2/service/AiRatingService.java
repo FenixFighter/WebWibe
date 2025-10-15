@@ -178,6 +178,7 @@ public class AiRatingService {
 
     /**
      * Checks if rating indicates need for human support
+     * Note: This is now only used for visual indicators, not automatic escalation
      */
     public boolean shouldEscalateToSupport(AiRating rating) {
         return rating.getScore() < 30;

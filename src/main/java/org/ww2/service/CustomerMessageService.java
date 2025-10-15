@@ -54,11 +54,8 @@ public class CustomerMessageService {
         AiRating rating = aiRatingService.evaluateAiResponse(message, aiResponse);
         saveAndSendAiResponseWithRating(chatId, aiResponse, rating);
         
-        // Check if low rating should trigger escalation
-        if (aiRatingService.shouldEscalateToSupport(rating)) {
-            log.warn("AI response rated low ({}), considering escalation for chat {}", rating.getScore(), chatId);
-            // Could trigger automatic escalation here if needed
-        }
+        // Note: Low ratings are now only used for visual indicators in support dashboard
+        // No automatic escalation - AI continues to work normally
     }
 
     /**

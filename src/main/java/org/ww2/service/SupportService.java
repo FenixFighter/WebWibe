@@ -97,15 +97,19 @@ public class SupportService {
         info.setCustomerEmail(chat.getCustomerEmail());
         
         // Check for low AI ratings in recent messages
+        // This is a simplified check - in a real implementation, you'd store rating data
         List<ChatMessage> recentMessages = chatService.getChatHistory(chat.getChatId());
         boolean hasLowRating = recentMessages.stream()
             .filter(msg -> msg.getSenderType() == ChatMessage.SenderType.AI)
             .anyMatch(msg -> {
-                // This would need to be enhanced to check actual rating data
-                // For now, we'll use a simple heuristic
-                return msg.getContent().toLowerCase().contains("i don't know") ||
-                       msg.getContent().toLowerCase().contains("i can't help") ||
-                       msg.getContent().toLowerCase().contains("contact support");
+                String content = msg.getContent().toLowerCase();
+                return content.contains("i don't know") ||
+                       content.contains("i can't help") ||
+                       content.contains("contact support") ||
+                       content.contains("human assistance") ||
+                       content.contains("escalate") ||
+                       content.contains("no answers found") ||
+                       content.contains("cannot help");
             });
         info.setLowRating(hasLowRating);
         
