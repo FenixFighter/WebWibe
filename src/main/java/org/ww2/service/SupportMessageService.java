@@ -18,11 +18,8 @@ public class SupportMessageService {
     private final AuthService authService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    /**
-     * Handles support user message
-     */
     public void handleSupportMessage(String chatId, String message, String token, ChatAssignment assignment) {
-        // Verify support user token (only if token is provided)
+
         User user = null;
         if (token != null && !token.trim().isEmpty()) {
             user = authService.getUserByToken(token);
@@ -32,25 +29,19 @@ public class SupportMessageService {
             }
         }
 
-        // If no assignment exists and we have a support user, create assignment
         if (assignment == null && user != null) {
             assignment = chatAssignmentService.assignChatToSupport(chatId);
         }
 
-        // Save support message
         String username = (user != null) ? user.getUsername() : "Support";
         chatService.saveSupportMessage(chatId, message, username);
 
-        // Send support message to customer
         WebSocketMessage supportMessage = WebSocketMessage.createSupportMessage(chatId, message, username);
         messagingTemplate.convertAndSend("/topic/chat", supportMessage);
-        
+
         log.info("Support message sent by {} for chat {}", username, chatId);
     }
 
-    /**
-     * Handles chat escalation
-     */
     public void handleChatEscalation(String chatId) {
         var assignment = chatAssignmentService.assignChatToSupport(chatId);
         if (assignment != null) {
@@ -63,15 +54,12 @@ public class SupportMessageService {
         }
     }
 
-    /**
-     * Handles chat release
-     */
     public void handleChatRelease(String chatId, String token) {
-        // Verify support user token
+
         if (token != null && !token.trim().isEmpty()) {
             User user = authService.getUserByToken(token);
             if (user != null && user.getRole().equals(User.UserRole.SUPPORT)) {
-                // Release chat from support - resolve assignment
+
                 chatAssignmentService.resolveChat(chatId);
 
                 WebSocketMessage releaseMessage = WebSocketMessage.createEscalationMessage(chatId,
@@ -87,9 +75,6 @@ public class SupportMessageService {
         }
     }
 
-    /**
-     * Sends error message to client
-     */
     private void sendErrorMessage(String errorMessage) {
         WebSocketMessage error = WebSocketMessage.createError(errorMessage);
         messagingTemplate.convertAndSend("/topic/chat/error", error);

@@ -14,9 +14,9 @@ import org.ww2.service.AuthenticationService;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
-    
+
     private final AuthenticationService authenticationService;
-    
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         try {
@@ -31,7 +31,7 @@ public class AuthController {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
     }
-    
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String token) {
         try {
@@ -42,7 +42,7 @@ public class AuthController {
             return ResponseEntity.status(400).body("Logout failed");
         }
     }
-    
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
@@ -51,7 +51,7 @@ public class AuthController {
                 request.getPassword(), 
                 request.getEmail()
             );
-            
+
             authenticationService.handleRegistration(
                 request.getUsername(),
                 request.getPassword(),
@@ -67,7 +67,7 @@ public class AuthController {
             return ResponseEntity.status(400).body("Registration failed");
         }
     }
-    
+
     @PostMapping("/register-support")
     public ResponseEntity<?> registerSupport(@RequestBody RegisterRequest request) {
         try {
@@ -76,7 +76,7 @@ public class AuthController {
                 request.getPassword(), 
                 request.getEmail()
             );
-            
+
             authenticationService.handleRegistration(
                 request.getUsername(),
                 request.getPassword(),
@@ -92,14 +92,12 @@ public class AuthController {
             return ResponseEntity.status(400).body("Support registration failed");
         }
     }
-    
-    // Внутренний класс для запроса регистрации
+
     public static class RegisterRequest {
         private String username;
         private String password;
         private String email;
-        
-        // Getters and setters
+
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
         public String getPassword() { return password; }

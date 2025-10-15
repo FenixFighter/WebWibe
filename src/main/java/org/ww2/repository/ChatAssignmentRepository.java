@@ -9,10 +9,10 @@ import java.util.Optional;
 
 @Repository
 public interface ChatAssignmentRepository extends JpaRepository<ChatAssignment, Long> {
-    
+
     Optional<ChatAssignment> findByChatIdAndStatus(String chatId, ChatAssignment.AssignmentStatus status);
-    
+
     List<ChatAssignment> findByAssignedUserIdAndStatus(Long userId, ChatAssignment.AssignmentStatus status);
-    
+
     List<ChatAssignment> findByStatus(ChatAssignment.AssignmentStatus status);
 }

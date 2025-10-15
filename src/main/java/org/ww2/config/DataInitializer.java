@@ -11,17 +11,17 @@ import org.ww2.repository.UserRepository;
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
-    
+
     private final UserRepository userRepository;
-    
+
     @Override
     public void run(String... args) throws Exception {
-        // Create test users if they don't exist
+
         createTestUsers();
     }
-    
+
     private void createTestUsers() {
-        // Create customer user
+
         if (userRepository.findByUsername("customer").isEmpty()) {
             User customer = new User();
             customer.setUsername("customer");
@@ -32,8 +32,7 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(customer);
             log.info("Created test customer user");
         }
-        
-        // Create support user
+
         if (userRepository.findByUsername("support").isEmpty()) {
             User support = new User();
             support.setUsername("support");
@@ -44,8 +43,7 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(support);
             log.info("Created test support user");
         }
-        
-        // Create admin user
+
         if (userRepository.findByUsername("admin").isEmpty()) {
             User admin = new User();
             admin.setUsername("admin");

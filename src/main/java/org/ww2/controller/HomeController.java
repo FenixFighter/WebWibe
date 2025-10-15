@@ -10,7 +10,7 @@ public class HomeController {
     public String home() {
         return "redirect:/chat.html";
     }
-    
+
     @GetMapping("/support")
     public String support() {
         return "redirect:/support.html";

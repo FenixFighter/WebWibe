@@ -9,7 +9,7 @@ import org.ww2.entity.User;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponse {
-    
+
     private String token;
     private User.UserRole role;
     private String username;

@@ -19,41 +19,26 @@ public class CustomerMessageService {
     private final AiRatingService aiRatingService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    /**
-     * Handles customer message processing
-     */
     public void handleCustomerMessage(String chatId, String message, ChatRequest request) {
-        // Save user message
         chatService.saveUserMessage(chatId, message);
-        
-        // Send user message back to client
+
         WebSocketMessage userMessage = WebSocketMessage.createUserMessage(chatId, message);
         messagingTemplate.convertAndSend("/topic/chat", userMessage);
-        
-        // Process message and get AI response with suggestions
+
         AiResponseWithSuggestions aiResponse = messageProcessingService.processCustomerMessage(chatId, message, request);
-        
+
         if (aiResponse == null) {
-            return; // No response needed
+            return;
         }
-        
-        // AI ALWAYS responds - no escalation, no exceptions
-        // Evaluate AI response and save with rating
+
         AiRating rating = aiRatingService.evaluateAiResponse(message, aiResponse.getAnswer());
         saveAndSendAiResponseWithRatingAndSuggestions(chatId, aiResponse, rating);
-        
-        // Low ratings are only used for visual indicators in support dashboard
+
     }
 
-
-    /**
-     * Saves AI message and sends it to client with rating and suggestions
-     */
     private void saveAndSendAiResponseWithRatingAndSuggestions(String chatId, AiResponseWithSuggestions aiResponse, AiRating rating) {
-        // Save AI message
         chatService.saveAiMessage(chatId, aiResponse.getAnswer());
-        
-        // Create WebSocket message with rating and suggestions
+
         WebSocketMessage aiMessage = new WebSocketMessage();
         aiMessage.setType("MESSAGE");
         aiMessage.setChatId(chatId);
@@ -62,9 +47,9 @@ public class CustomerMessageService {
         aiMessage.setTimestamp(System.currentTimeMillis());
         aiMessage.setRating(rating);
         aiMessage.setSuggestions(aiResponse.getSuggestions());
-        
+
         messagingTemplate.convertAndSend("/topic/chat", aiMessage);
-        
+
         log.info("AI response with suggestions sent for chat {} with rating {}/100", chatId, rating.getScore());
     }
 }

@@ -10,15 +10,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WebSocketMessage {
-    
+
     private String type;
     private String chatId;
     private String content;
     private String sender;
     private Long timestamp;
-    private AiRating rating; // AI response rating
-    private List<String> suggestions; // AI response suggestions
-    
+    private AiRating rating; 
+    private List<String> suggestions; 
+
     public static WebSocketMessage createUserMessage(String chatId, String content) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType("MESSAGE");
@@ -28,7 +28,7 @@ public class WebSocketMessage {
         message.setTimestamp(System.currentTimeMillis());
         return message;
     }
-    
+
     public static WebSocketMessage createAiMessage(String chatId, String content) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType("MESSAGE");
@@ -38,7 +38,7 @@ public class WebSocketMessage {
         message.setTimestamp(System.currentTimeMillis());
         return message;
     }
-    
+
     public static WebSocketMessage createChatCreated(String chatId) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType("CHAT_CREATED");
@@ -48,7 +48,7 @@ public class WebSocketMessage {
         message.setTimestamp(System.currentTimeMillis());
         return message;
     }
-    
+
     public static WebSocketMessage createError(String error) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType("ERROR");
@@ -57,7 +57,7 @@ public class WebSocketMessage {
         message.setTimestamp(System.currentTimeMillis());
         return message;
     }
-    
+
     public static WebSocketMessage createSupportMessage(String chatId, String content, String supportUsername) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType("MESSAGE");
@@ -67,7 +67,7 @@ public class WebSocketMessage {
         message.setTimestamp(System.currentTimeMillis());
         return message;
     }
-    
+
     public static WebSocketMessage createEscalationMessage(String chatId, String content) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType("ESCALATION");

@@ -16,9 +16,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class SupportController {
-    
+
     private final SupportService supportService;
-    
+
     @GetMapping("/all-chats")
     public ResponseEntity<?> getAllChats(@RequestHeader("Authorization") String token) {
         try {
@@ -26,7 +26,7 @@ public class SupportController {
             if (user == null) {
                 return ResponseEntity.status(403).body("Access denied");
             }
-            
+
             List<ChatInfo> chatInfos = supportService.getAllChats();
             return ResponseEntity.ok(chatInfos);
         } catch (Exception e) {
@@ -34,7 +34,7 @@ public class SupportController {
             return ResponseEntity.status(500).body("Error loading chats");
         }
     }
-    
+
     @GetMapping("/assigned-chats")
     public ResponseEntity<?> getAssignedChats(@RequestHeader("Authorization") String token) {
         try {
@@ -42,7 +42,7 @@ public class SupportController {
             if (user == null) {
                 return ResponseEntity.status(403).body("Access denied");
             }
-            
+
             List<ChatInfo> chatInfos = supportService.getAssignedChats(user.getId());
             return ResponseEntity.ok(chatInfos);
         } catch (Exception e) {
@@ -50,7 +50,7 @@ public class SupportController {
             return ResponseEntity.status(500).body("Error loading chats");
         }
     }
-    
+
     @GetMapping("/chat-history/{chatId}")
     public ResponseEntity<?> getChatHistory(@PathVariable String chatId, 
                                           @RequestHeader("Authorization") String token) {
@@ -59,7 +59,7 @@ public class SupportController {
             if (user == null) {
                 return ResponseEntity.status(403).body("Access denied");
             }
-            
+
             List<MessageInfo> messageInfos = supportService.getChatHistory(chatId);
             return ResponseEntity.ok(messageInfos);
         } catch (Exception e) {
@@ -67,7 +67,7 @@ public class SupportController {
             return ResponseEntity.status(500).body("Error loading chat history");
         }
     }
-    
+
     @PostMapping("/assign-chat/{chatId}")
     public ResponseEntity<?> assignChat(@PathVariable String chatId,
                                       @RequestHeader("Authorization") String token) {
@@ -76,7 +76,7 @@ public class SupportController {
             if (user == null) {
                 return ResponseEntity.status(403).body("Access denied");
             }
-            
+
             var assignment = supportService.assignChatToSupport(chatId);
             if (assignment != null) {
                 return ResponseEntity.ok("Chat assigned successfully");
@@ -88,7 +88,7 @@ public class SupportController {
             return ResponseEntity.status(500).body("Error assigning chat");
         }
     }
-    
+
     @PostMapping("/resolve-chat/{chatId}")
     public ResponseEntity<?> resolveChat(@PathVariable String chatId,
                                        @RequestHeader("Authorization") String token) {
@@ -97,7 +97,7 @@ public class SupportController {
             if (user == null) {
                 return ResponseEntity.status(403).body("Access denied");
             }
-            
+
             supportService.resolveChat(chatId);
             return ResponseEntity.ok("Chat resolved successfully");
         } catch (Exception e) {

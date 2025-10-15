@@ -16,56 +16,54 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class ChatAssignmentService {
-    
+
     private final ChatAssignmentRepository chatAssignmentRepository;
     private final UserRepository userRepository;
-    
+
     @Transactional
     public ChatAssignment assignChatToSupport(String chatId) {
-        // Проверяем, есть ли уже назначение для этого чата
+
         Optional<ChatAssignment> existingAssignment = chatAssignmentRepository
             .findByChatIdAndStatus(chatId, ChatAssignment.AssignmentStatus.ACTIVE);
-        
+
         if (existingAssignment.isPresent()) {
             log.info("Chat {} is already assigned to support", chatId);
             return existingAssignment.get();
         }
-        
-        // Находим доступного сотрудника техподдержки
+
         List<User> availableSupport = userRepository.findByRoleAndIsOnlineTrue(User.UserRole.SUPPORT);
-        
+
         if (availableSupport.isEmpty()) {
             log.warn("No online support staff available for chat {}", chatId);
             return null;
         }
-        
-        // Назначаем чат первому доступному сотруднику
+
         User supportUser = availableSupport.get(0);
-        
+
         ChatAssignment assignment = new ChatAssignment();
         assignment.setChatId(chatId);
         assignment.setAssignedUser(supportUser);
         assignment.setStatus(ChatAssignment.AssignmentStatus.ACTIVE);
-        
+
         ChatAssignment savedAssignment = chatAssignmentRepository.save(assignment);
         log.info("Chat {} assigned to support user {}", chatId, supportUser.getUsername());
-        
+
         return savedAssignment;
     }
-    
+
     public Optional<ChatAssignment> getChatAssignment(String chatId) {
         return chatAssignmentRepository.findByChatIdAndStatus(chatId, ChatAssignment.AssignmentStatus.ACTIVE);
     }
-    
+
     public List<ChatAssignment> getAssignedChats(Long userId) {
         return chatAssignmentRepository.findByAssignedUserIdAndStatus(userId, ChatAssignment.AssignmentStatus.ACTIVE);
     }
-    
+
     @Transactional
     public void resolveChat(String chatId) {
         Optional<ChatAssignment> assignment = chatAssignmentRepository
             .findByChatIdAndStatus(chatId, ChatAssignment.AssignmentStatus.ACTIVE);
-        
+
         if (assignment.isPresent()) {
             ChatAssignment chatAssignment = assignment.get();
             chatAssignment.setStatus(ChatAssignment.AssignmentStatus.RESOLVED);
@@ -74,7 +72,7 @@ public class ChatAssignmentService {
             log.info("Chat {} resolved", chatId);
         }
     }
-    
+
     public List<ChatAssignment> getPendingAssignments() {
         return chatAssignmentRepository.findByStatus(ChatAssignment.AssignmentStatus.PENDING);
     }

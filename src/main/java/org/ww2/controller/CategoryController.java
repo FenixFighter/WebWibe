@@ -12,9 +12,9 @@ import java.util.List;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class CategoryController {
-    
+
     private final TemplateAnswerRepository templateAnswerRepository;
-    
+
     @GetMapping("/categories")
     public List<String> getCategories() {
         return templateAnswerRepository.findDistinctCategories();

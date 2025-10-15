@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AiRating {
-    private int score; // 0-100
-    private String answer; // Explanation of the rating
+    private int score; 
+    private String answer; 
 }

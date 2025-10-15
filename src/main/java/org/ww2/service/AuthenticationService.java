@@ -16,9 +16,6 @@ public class AuthenticationService {
     private final AuthService authService;
     private final UserRepository userRepository;
 
-    /**
-     * Handles user login
-     */
     public AuthResponse handleLogin(AuthRequest request) {
         try {
             AuthResponse response = authService.authenticate(request);
@@ -30,9 +27,6 @@ public class AuthenticationService {
         }
     }
 
-    /**
-     * Handles user logout
-     */
     public void handleLogout(String token) {
         try {
             authService.logout(token);
@@ -43,12 +37,9 @@ public class AuthenticationService {
         }
     }
 
-    /**
-     * Handles user registration
-     */
     public User handleRegistration(String username, String password, String email, User.UserRole role) {
         try {
-            // Check if user already exists
+
             if (userRepository.findByUsername(username).isPresent()) {
                 throw new RuntimeException("Username already exists");
             }
@@ -62,9 +53,6 @@ public class AuthenticationService {
         }
     }
 
-    /**
-     * Validates registration request
-     */
     public void validateRegistrationRequest(String username, String password, String email) {
         if (username == null || username.trim().isEmpty()) {
             throw new IllegalArgumentException("Username is required");

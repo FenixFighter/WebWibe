@@ -13,44 +13,44 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(name = "username", unique = true, nullable = false)
     private String username;
-    
+
     @Column(name = "password", nullable = false)
     private String password;
-    
+
     @Column(name = "email", unique = true, nullable = false)
     private String email;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;
-    
+
     @Column(name = "is_online")
     private Boolean isOnline = false;
-    
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
-    
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-    
+
     public enum UserRole {
         CUSTOMER, SUPPORT, ADMIN
     }
