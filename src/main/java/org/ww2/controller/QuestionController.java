@@ -11,9 +11,9 @@ import org.ww2.service.QuestionProcessingService;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class QuestionController {
-    
+
     private final QuestionProcessingService questionProcessingService;
-    
+
     @PostMapping("/question")
     public ResponseEntity<QuestionResponse> processQuestion(@RequestBody QuestionRequest request) {
         try {
@@ -25,4 +25,3 @@ public class QuestionController {
         }
     }
 }
-

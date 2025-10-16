@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <link rel="stylesheet" href="css/support.css" />
+  </head>
+  <body>
+    <div class="top-bar"></div>
+    <div class="dashboard-container">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h1>Support Dashboard</h1>
+          <div id="userInfo" class="user-info" style="display: none">
+            Welcome, <span id="userDisplay"></span>
+          </div>
+        </div>
+
+        <div id="loginSection" class="login-section">
+          <form id="loginForm" class="login-form">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Enter username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+          </form>
+        </div>
+
+        <div id="filtersSection" class="filters-section" style="display: none">
+          <div class="filters-title">Filters</div>
+          <div class="filters-row">
+            <div class="filter-group">
+              <label for="statusFilter">Status</label>
+              <select id="statusFilter" class="filter-select">
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="escalated">Escalated</option>
+                <option value="assigned">Assigned</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="ratingFilter">AI Rating</label>
+              <select id="ratingFilter" class="filter-select">
+                <option value="all">All Ratings</option>
+                <option value="low">Low Rating</option>
+                <option value="normal">Normal Rating</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="nameFilter">Customer Name</label>
+              <select id="nameFilter" class="filter-select">
+                <option value="all">All Customers</option>
+                <option value="named">Named Customers</option>
+                <option value="anonymous">Anonymous</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="newnessFilter">Chat Age</label>
+              <select id="newnessFilter" class="filter-select">
+                <option value="all">All Chats</option>
+                <option value="new">New (Last 1h)</option>
+                <option value="recent">Recent (Last 24h)</option>
+                <option value="old">Old (24h+)</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="importanceFilter">Importance</label>
+              <select id="importanceFilter" class="filter-select">
+                <option value="all">All Priority</option>
+                <option value="high">High Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="low">Low Priority</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="searchInput">Search</label>
+              <input
+                type="text"
+                id="searchInput"
+                class="filter-input"
+                placeholder="Search chats..."
+              />
+            </div>
+            <div class="filter-buttons">
+              <button id="clearFilters" class="btn btn-secondary filter-btn">
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="chatsSection" class="chats-section" style="display: none">
+          <div class="section-title">Active Chats</div>
+          <div id="chatRoomsList" class="chat-list">
+            <!-- Chat rooms will be loaded here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div id="welcomeScreen" class="welcome-screen">
+          Please select a chat to start supporting customers
+        </div>
+
+        <div id="chatContainer" class="chat-container">
+          <div class="chat-header-main">
+            <div class="chat-title" id="currentChatTitle">Chat</div>
+            <div class="chat-actions-main">
+              <button
+                id="releaseButton"
+                class="btn btn-warning"
+                onclick="releaseChat()"
+                disabled
+              >
+                Release Chat
+              </button>
+              <button class="btn btn-secondary" onclick="closeChat()">
+                Close
+              </button>
+            </div>
+          </div>
+
+          <div id="chatMessages" class="chat-messages">
+            <!-- Messages will be displayed here -->
+          </div>
+
+          <div class="chat-input-container">
+            <div class="input-row">
+              <input
+                type="text"
+                id="messageInput"
+                class="message-input"
+                placeholder="Type your message..."
+                disabled
+              />
+            </div>
+            <div class="button-row">
+              <button id="sendButton" class="btn btn-primary" disabled>
+                Send Message
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/support.js"></script>
+  </body>
+</html>

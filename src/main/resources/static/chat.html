@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <link rel="stylesheet" href="css/chat.css" />
+  </head>
+  <body>
+    <div class="chat-wrapper">
+      <div class="chat-header">
+        <h1>Assistant</h1>
+        <div id="connectionStatus" class="connection-status">Connecting...</div>
+      </div>
+
+      <div id="chatMessages" class="chat-messages">
+        <!-- Messages will be displayed here -->
+      </div>
+
+      <div class="chat-input-container">
+        <div class="input-row">
+          <select id="categorySelect" class="category-select">
+            <option value="">Select a category...</option>
+          </select>
+          <input
+            type="text"
+            id="messageInput"
+            class="message-input"
+            placeholder="Type your message..."
+            disabled
+          />
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+          <span class="typing-dots">Assistant is typing</span>
+        </div>
+
+        <div class="button-row">
+          <button id="sendButton" class="btn btn-primary" disabled>
+            Send Message
+          </button>
+          <button
+            id="escalateButton"
+            class="btn btn-secondary"
+            onclick="escalateToSupport()"
+          >
+            Escalate to Support
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/chat.js"></script>
+  </body>
+</html>

@@ -10,4 +10,3 @@ import lombok.AllArgsConstructor;
 public class QuestionResponse {
     private String answer;
 }
-

@@ -1,26 +1,23 @@
 package org.ww2.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.ww2.dto.AiResponseWithSuggestions;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class AiService {
-    
+
     private final WebClient webClient;
     
-    @Value("${spring.ai.openai.api-key}")
-    private String apiKey;
-    
-    @Value("${spring.ai.openai.base-url}")
-    private String baseUrl;
-    
-    @Value("${spring.ai.openai.chat.options.model}")
-    private String model;
-    
+    @Autowired
+    private VectorSearchService vectorSearchService;
+
     public AiService() {
         this.webClient = WebClient.builder()
             .baseUrl("http://45.145.191.148:4000/v1")
@@ -28,99 +25,63 @@ public class AiService {
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
     }
-    
-    /**
-     * Определяет наиболее подходящую подкатегорию на основе вопроса и списка доступных подкатегорий
-     */
-    public String findBestSubcategory(String question, List<String> subcategories) {
-        System.out.println("=== AI Service: findBestSubcategory ===");
+
+    public AiResponseWithSuggestions processQuestionWithDataSource(String question, String category) {
+        System.out.println("=== AI Service: processQuestionWithDataSource (Few-Shot Learning) ===");
         System.out.println("Question: " + question);
-        System.out.println("Subcategories: " + subcategories);
-        
-        if (subcategories == null || subcategories.isEmpty()) {
-            System.out.println("No subcategories provided");
-            return null;
-        }
-        
-        String subcategoriesList = String.join(", ", subcategories);
-        
-        String prompt = String.format(
-            "Based on the user question: \"%s\"\n" +
-            "Choose the most relevant subcategory from this list: %s\n" +
-            "Return only the exact subcategory name, nothing else.",
-            question, subcategoriesList
-        );
-        
-        System.out.println("Prompt for AI: " + prompt);
-        String result = callAiApi(prompt);
+        System.out.println("Category: " + category);
+
+        String fewShotPrompt = vectorSearchService.generateFewShotPrompt(question, category);
+        System.out.println("Few-shot prompt: " + fewShotPrompt);
+
+        String result = callAiApi(fewShotPrompt);
         System.out.println("AI response: " + result);
-        return result;
+
+        List<String> suggestions = generateSuggestionsFromSimilarQuestions(question, category);
+        
+        String[] categoryInfo = vectorSearchService.getCategoryAndSubcategory(question, category);
+        String foundCategory = categoryInfo[0];
+        String foundSubcategory = categoryInfo[1];
+        
+        return new AiResponseWithSuggestions(result, suggestions, foundCategory, foundSubcategory);
     }
-    
-    /**
-     * Находит наиболее релевантный ответ из списка шаблонных ответов
-     */
-    public String findBestAnswer(String question, List<String> templateMessages) {
-        System.out.println("=== AI Service: findBestAnswer ===");
-        System.out.println("Question: " + question);
-        System.out.println("Template messages: " + templateMessages);
-        
-        if (templateMessages == null || templateMessages.isEmpty()) {
-            System.out.println("No template messages provided");
-            return "No relevant answer found.";
-        }
-        
-        String messagesList = String.join("\n---\n", templateMessages);
-        
-        String prompt = String.format(
-            "Based on the user question: \"%s\"\n" +
-            "Choose the most relevant answer from these template responses:\n\n%s\n\n" +
-            "Return only the most appropriate answer text, nothing else. " +
-            "If no answer is suitable, return 'No suitable answer found.'",
-            question, messagesList
-        );
-        
-        System.out.println("Prompt for AI: " + prompt);
-        String result = callAiApi(prompt);
-        System.out.println("AI response: " + result);
-        return result;
-    }
-    
+
     private String callAiApi(String prompt) {
         System.out.println("=== AI Service: callAiApi ===");
         System.out.println("Making request to SciBox API...");
-        
+
         try {
-            // Правильное экранирование JSON
             String escapedPrompt = prompt.replace("\\", "\\\\")
                                        .replace("\"", "\\\"")
                                        .replace("\n", "\\n")
                                        .replace("\r", "\\r")
                                        .replace("\t", "\\t");
-            
+
             String requestBody = String.format("""
                 {
                     "model": "Qwen2.5-72B-Instruct-AWQ",
                     "messages": [
                         {"role": "user", "content": "%s"}
                     ],
-                    "temperature": 0.7,
-                    "max_tokens": 1000
+                    "temperature": 0.3,
+                    "max_tokens": 1000,
+                    "top_p": 0.9,
+                    "frequency_penalty": 0.1,
+                    "presence_penalty": 0.1
                 }
                 """, escapedPrompt);
-            
+
             System.out.println("Request body: " + requestBody);
-            
+
             String response = webClient.post()
                 .uri("/chat/completions")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
-            
+
             System.out.println("Raw AI response: " + response);
-            
-            // Улучшенная обработка ответа
+
             if (response != null && response.contains("\"content\"")) {
                 int start = response.indexOf("\"content\":\"") + 11;
                 int end = response.indexOf("\"", start);
@@ -135,21 +96,19 @@ public class AiService {
                     return extractedContent;
                 }
             }
-            
+
             System.out.println("Failed to extract content from AI response");
             return "Error processing AI response";
         } catch (Exception e) {
             System.out.println("Exception in callAiApi: " + e.getMessage());
             e.printStackTrace();
-            // Возвращаем fallback ответ вместо ошибки
             return getFallbackResponse(prompt);
         }
     }
-    
+
     private String getFallbackResponse(String prompt) {
         System.out.println("Using fallback response for prompt: " + prompt);
-        
-        // Простая логика fallback для определения подкатегории
+
         if (prompt.contains("subcategory")) {
             if (prompt.contains("Credit Cards")) {
                 return "Credit Cards";
@@ -164,13 +123,10 @@ public class AiService {
             } else if (prompt.contains("Contact")) {
                 return "Contact";
             }
-            // Возвращаем первую доступную подкатегорию
             return "Credit Cards";
         }
-        
-        // Fallback для выбора лучшего ответа - возвращаем первый доступный ответ
+
         if (prompt.contains("template responses")) {
-            // Извлекаем первый ответ из списка шаблонных ответов
             String[] lines = prompt.split("\n");
             for (String line : lines) {
                 if (line.trim().length() > 10 && !line.contains("---")) {
@@ -178,7 +134,24 @@ public class AiService {
                 }
             }
         }
+
+        return "Обратитесь в отделение банка ВТБ (Беларусь) для получения подробной информации по вашему вопросу.";
+    }
+
+    
+    private List<String> generateSuggestionsFromSimilarQuestions(String question, String category) {
+        System.out.println("=== Generating suggestions from similar questions ===");
         
-        return "To apply for a credit card, please visit our nearest branch with your ID and proof of income.";
+        // Находим похожие вопросы из векторной базы знаний
+        List<org.ww2.entity.KnowledgeVector> similarExamples = 
+            vectorSearchService.findSimilarQuestions(question, category, 3);
+        
+        List<String> suggestions = new ArrayList<>();
+        for (org.ww2.entity.KnowledgeVector example : similarExamples) {
+            suggestions.add(example.getQuestion());
+        }
+        
+        System.out.println("Generated suggestions: " + suggestions);
+        return suggestions;
     }
 }

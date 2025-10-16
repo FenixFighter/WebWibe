@@ -11,4 +11,3 @@ public class QuestionRequest {
     private String message;
     private String category;
 }
-

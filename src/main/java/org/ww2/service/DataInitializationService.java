@@ -14,23 +14,22 @@ import java.util.List;
 @RequiredArgsConstructor
 @Order(1)
 public class DataInitializationService implements CommandLineRunner {
-    
+
     private final TemplateAnswerRepository templateAnswerRepository;
-    
+
     @Override
     public void run(String... args) throws Exception {
-        // Проверяем, есть ли уже данные
+
         long count = templateAnswerRepository.count();
         System.out.println("Current template answers count: " + count);
-        
+
         if (count > 0) {
             System.out.println("Data already exists, skipping initialization");
             return;
         }
-        
+
         System.out.println("Initializing test data...");
-        
-        // Создаем тестовые данные
+
         List<TemplateAnswer> sampleData = Arrays.asList(
             new TemplateAnswer(null, "Banking", "Credit Cards", "To apply for a credit card, please visit our nearest branch with your ID and proof of income."),
             new TemplateAnswer(null, "Banking", "Credit Cards", "Credit card interest rates vary from 15% to 25% depending on your credit score."),
@@ -45,7 +44,7 @@ public class DataInitializationService implements CommandLineRunner {
             new TemplateAnswer(null, "General", "Contact", "You can reach our customer service at 1-800-BANK-HELP or visit any branch."),
             new TemplateAnswer(null, "General", "Contact", "Our customer service is available Monday-Friday 8AM-6PM and Saturday 9AM-2PM.")
         );
-        
+
         templateAnswerRepository.saveAll(sampleData);
         System.out.println("Test data initialized successfully. Total records: " + templateAnswerRepository.count());
     }
