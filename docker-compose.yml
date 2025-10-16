@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     container_name: ww2-postgres
     environment:
       POSTGRES_DB: postgres
@@ -8,6 +8,7 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-vector.sql:/docker-entrypoint-initdb.d/init-vector.sql
     networks:
       - ww2-network
     restart: unless-stopped
