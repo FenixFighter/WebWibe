@@ -11,6 +11,12 @@ body {
   color: #ffffff;
 }
 
+.top-bar {
+  height: 4px;
+  background: #2d7ff9;
+  width: 100%;
+}
+
 .dashboard-container {
   display: flex;
   height: 100vh;
