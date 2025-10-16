@@ -37,7 +37,7 @@ public class CustomerMessageService {
     }
 
     private void saveAndSendAiResponseWithRatingAndSuggestions(String chatId, AiResponseWithSuggestions aiResponse, AiRating rating) {
-        chatService.saveAiMessage(chatId, aiResponse.getAnswer());
+        chatService.saveAiMessage(chatId, aiResponse.getAnswer(), aiResponse.getCategory(), aiResponse.getSubcategory());
 
         WebSocketMessage aiMessage = new WebSocketMessage();
         aiMessage.setType("MESSAGE");
@@ -47,6 +47,8 @@ public class CustomerMessageService {
         aiMessage.setTimestamp(System.currentTimeMillis());
         aiMessage.setRating(rating);
         aiMessage.setSuggestions(aiResponse.getSuggestions());
+        aiMessage.setCategory(aiResponse.getCategory());
+        aiMessage.setSubcategory(aiResponse.getSubcategory());
 
         messagingTemplate.convertAndSend("/topic/chat", aiMessage);
 

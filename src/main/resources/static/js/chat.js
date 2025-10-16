@@ -165,13 +165,42 @@ function displayMessage(messageData) {
     // Убираем [DATA_SOURCE] из контента сообщения
     const cleanContent = messageData.content.replace(/\[DATA_SOURCE\]/g, "");
 
+    // Создаем HTML для категории и подкатегории
+    let categoryHtml = "";
+    if (
+      messageData.sender === "AI" &&
+      (messageData.category || messageData.subcategory)
+    ) {
+      const categoryText = messageData.category || "";
+      const subcategoryText = messageData.subcategory || "";
+
+      let categoryElements = [];
+      if (categoryText) {
+        categoryElements.push(
+          `<div class="message-category">📂 ${categoryText}</div>`
+        );
+      }
+      if (subcategoryText) {
+        categoryElements.push(
+          `<div class="message-category">📁 ${subcategoryText}</div>`
+        );
+      }
+
+      if (categoryElements.length > 0) {
+        categoryHtml = `<div class="message-categories">${categoryElements.join(
+          ""
+        )}</div>`;
+      }
+    }
+
     messageDiv.innerHTML = `
               <div class="message-bubble">
-                  ${cleanContent}
+                  <div class="message-content">${cleanContent}</div>
                   <div class="message-time">${formatTime(
                     messageData.timestamp
                   )}</div>
                   ${ratingHtml}
+                  ${categoryHtml}
                   ${suggestionsHtml}
               </div>
           `;

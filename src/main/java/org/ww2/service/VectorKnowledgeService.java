@@ -333,6 +333,47 @@ public class VectorKnowledgeService {
         return text;
     }
     
+    public String[] getCategoryAndSubcategory(String question, String category) {
+        System.out.println("=== Getting Category and Subcategory ===");
+        
+        try {
+            List<KnowledgeVector> similarVectors = findSimilarQuestions(question, category, 1);
+            
+            if (!similarVectors.isEmpty()) {
+                KnowledgeVector bestMatch = similarVectors.get(0);
+                String foundCategory = bestMatch.getCategory();
+                
+                // Получаем подкатегорию из базы данных
+                String subcategory = getSubcategoryFromDatabase(foundCategory);
+                
+                System.out.println("Found category: " + foundCategory + ", subcategory: " + subcategory);
+                return new String[]{foundCategory, subcategory};
+            }
+            
+            return new String[]{null, null};
+            
+        } catch (Exception e) {
+            System.err.println("Error getting category: " + e.getMessage());
+            return new String[]{null, null};
+        }
+    }
+    
+    private String getSubcategoryFromDatabase(String category) {
+        try {
+            // Получаем первую запись из категории для определения подкатегории
+            List<KnowledgeVector> categoryResults = knowledgeVectorRepository.findByCategoryIgnoreCase(category);
+            if (!categoryResults.isEmpty()) {
+                // Здесь можно добавить логику для определения подкатегории
+                // Пока возвращаем null, так как в нашей структуре нет отдельного поля подкатегории
+                return null;
+            }
+            return null;
+        } catch (Exception e) {
+            System.err.println("Error getting subcategory: " + e.getMessage());
+            return null;
+        }
+    }
+    
     public String generateFewShotPrompt(String question, String category) {
         System.out.println("=== Generating Few-Shot Prompt with Vector Search ===");
         

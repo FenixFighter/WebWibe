@@ -35,6 +35,12 @@ public class ChatMessage {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "subcategory")
+    private String subcategory;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

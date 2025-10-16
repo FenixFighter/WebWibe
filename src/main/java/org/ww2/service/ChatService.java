@@ -99,6 +99,22 @@ public class ChatService {
         log.info("Saved AI message for chat: {}", chatId);
         return message;
     }
+    
+    @Transactional
+    public ChatMessage saveAiMessage(String chatId, String content, String category, String subcategory) {
+        getOrCreateChat(chatId);
+
+        ChatMessage message = new ChatMessage();
+        message.setChatId(chatId);
+        message.setContent(content);
+        message.setSenderType(ChatMessage.SenderType.AI);
+        message.setCategory(category);
+        message.setSubcategory(subcategory);
+
+        message = chatMessageRepository.save(message);
+        log.info("Saved AI message for chat: {} with category: {} and subcategory: {}", chatId, category, subcategory);
+        return message;
+    }
 
     public List<ChatMessage> getChatHistory(String chatId) {
         return chatMessageRepository.findByChatIdOrderByCreatedAtAsc(chatId);

@@ -41,7 +41,12 @@ public class AiService {
         // Генерируем предложения на основе найденных похожих вопросов
         List<String> suggestions = generateSuggestionsFromSimilarQuestions(question, category);
         
-        return new AiResponseWithSuggestions(result, suggestions);
+        // Получаем категорию и подкатегорию
+        String[] categoryInfo = vectorSearchService.getCategoryAndSubcategory(question, category);
+        String foundCategory = categoryInfo[0];
+        String foundSubcategory = categoryInfo[1];
+        
+        return new AiResponseWithSuggestions(result, suggestions, foundCategory, foundSubcategory);
     }
 
     private String callAiApi(String prompt) {

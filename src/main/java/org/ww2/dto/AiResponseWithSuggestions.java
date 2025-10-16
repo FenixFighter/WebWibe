@@ -12,4 +12,6 @@ import java.util.List;
 public class AiResponseWithSuggestions {
     private String answer;
     private List<String> suggestions;
+    private String category;
+    private String subcategory;
 }

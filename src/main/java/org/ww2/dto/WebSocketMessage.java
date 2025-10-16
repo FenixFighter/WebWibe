@@ -17,7 +17,9 @@ public class WebSocketMessage {
     private String sender;
     private Long timestamp;
     private AiRating rating; 
-    private List<String> suggestions; 
+    private List<String> suggestions;
+    private String category;
+    private String subcategory; 
 
     public static WebSocketMessage createUserMessage(String chatId, String content) {
         WebSocketMessage message = new WebSocketMessage();

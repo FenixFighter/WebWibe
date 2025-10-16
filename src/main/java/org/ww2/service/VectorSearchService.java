@@ -19,4 +19,8 @@ public class VectorSearchService {
     public String generateFewShotPrompt(String question, String category) {
         return vectorKnowledgeService.generateFewShotPrompt(question, category);
     }
+    
+    public String[] getCategoryAndSubcategory(String question, String category) {
+        return vectorKnowledgeService.getCategoryAndSubcategory(question, category);
+    }
 }

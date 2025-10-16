@@ -111,6 +111,12 @@ body {
   border-radius: 18px;
   position: relative;
   word-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-content {
+  margin-bottom: 8px;
 }
 
 .message.user .message-bubble {
@@ -443,4 +449,31 @@ body {
   .category-select {
     flex: 1;
   }
+}
+
+/* Category display styles */
+.message-category {
+  background: rgba(45, 127, 249, 0.1);
+  border: 1px solid #2d7ff9;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: 8px 4px 8px 0;
+  font-size: 11px;
+  color: #2d7ff9;
+  font-weight: 500;
+  text-align: center;
+  display: inline-block;
+  max-width: fit-content;
+  word-wrap: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Container for multiple categories in a column */
+.message-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
 }
