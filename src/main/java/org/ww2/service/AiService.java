@@ -128,34 +128,6 @@ public class AiService {
         return "To apply for a credit card, please visit our nearest branch with your ID and proof of income.";
     }
 
-    private String buildDataSourceSearchPrompt(String question, String category) {
-        StringBuilder prompt = new StringBuilder();
-
-        prompt.append("You are an AI assistant with access to a knowledge base containing banking information.\n");
-        prompt.append("Your task is to search through your internal knowledge base for the most relevant answer.\n\n");
-
-        prompt.append("IMPORTANT: Look for responses that contain the special marker [DATA_SOURCE] in your knowledge base.\n");
-        prompt.append("These are verified, high-quality responses that should be prioritized.\n\n");
-
-        if (category != null && !category.trim().isEmpty()) {
-            prompt.append("Question category/direction: ").append(category).append("\n");
-            prompt.append("Use this as a hint for the type of banking service the user is asking about.\n\n");
-        }
-
-        prompt.append("User question: ").append(question).append("\n\n");
-
-        prompt.append("Instructions:\n");
-        prompt.append("1. Search your knowledge base for responses marked with [DATA_SOURCE]\n");
-        prompt.append("2. Find the most relevant answer based on the user's question\n");
-        prompt.append("3. If you find a relevant [DATA_SOURCE] response, use it as your answer\n");
-        prompt.append("4. If no [DATA_SOURCE] response is relevant, provide a general helpful response\n");
-        prompt.append("5. Always be professional and accurate in your banking advice\n\n");
-
-        prompt.append("Please provide the most appropriate response from your knowledge base.");
-
-        return prompt.toString();
-    }
-
     private String buildDataSourceSearchWithSuggestionsPrompt(String question, String category) {
         StringBuilder prompt = new StringBuilder();
 
