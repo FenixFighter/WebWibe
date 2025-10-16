@@ -31,17 +31,14 @@ public class AiService {
         System.out.println("Question: " + question);
         System.out.println("Category: " + category);
 
-        // Генерируем few-shot промпт с примерами
         String fewShotPrompt = vectorSearchService.generateFewShotPrompt(question, category);
         System.out.println("Few-shot prompt: " + fewShotPrompt);
 
         String result = callAiApi(fewShotPrompt);
         System.out.println("AI response: " + result);
 
-        // Генерируем предложения на основе найденных похожих вопросов
         List<String> suggestions = generateSuggestionsFromSimilarQuestions(question, category);
         
-        // Получаем категорию и подкатегорию
         String[] categoryInfo = vectorSearchService.getCategoryAndSubcategory(question, category);
         String foundCategory = categoryInfo[0];
         String foundSubcategory = categoryInfo[1];

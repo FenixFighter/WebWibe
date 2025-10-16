@@ -38,21 +38,18 @@ public class VectorKnowledgeService {
     public void initializeKnowledgeBase() {
         System.out.println("=== Initializing Vector Knowledge Base ===");
         
-        // Проверяем, есть ли уже данные в базе
         long count = knowledgeVectorRepository.count();
         if (count > 0) {
             System.out.println("Knowledge base already initialized with " + count + " vectors");
             return;
         }
         
-        // Загружаем данные из CSV файла
         loadAndVectorizeData();
     }
     
     private void loadAndVectorizeData() {
         try {
             System.out.println("Loading data from CSV file...");
-            // Читаем CSV файл из resources
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream("smart_support_vtb_belarus_faq_final.csv");
             if (inputStream == null) {
                 System.err.println("CSV file not found in resources");
@@ -67,27 +64,24 @@ public class VectorKnowledgeService {
             while ((line = reader.readLine()) != null) {
                 if (isFirstLine) {
                     isFirstLine = false;
-                    continue; // Пропускаем заголовок
+                    continue;
                 }
                 
                 String[] fields = parseCSVLine(line);
                 if (fields.length >= 6) {
-                    String category = fields[0].trim(); // Основная категория
-                    String subcategory = fields[1].trim(); // Подкатегория
-                    String question = fields[2].trim(); // Пример вопроса
-                    String answer = fields[5].trim(); // Шаблонный ответ
+                    String category = fields[0].trim();
+                    String subcategory = fields[1].trim();
+                    String question = fields[2].trim();
+                    String answer = fields[5].trim();
                     
                     if (question != null && !question.isEmpty() && 
                         answer != null && !answer.isEmpty()) {
                         
-                        // Временно отключаем создание эмбеддингов из-за проблем с API
-                        // String embedding = createEmbedding(question);
                         
                         KnowledgeVector vector = new KnowledgeVector();
                         vector.setQuestion(question);
                         vector.setAnswer(answer);
                         vector.setCategory(category != null ? category.toLowerCase() : null);
-                        // vector.setEmbedding(embedding);
                         
                         vectors.add(vector);
                         
@@ -99,7 +93,6 @@ public class VectorKnowledgeService {
             reader.close();
             inputStream.close();
             
-            // Сохраняем все векторы в базу данных
             knowledgeVectorRepository.saveAll(vectors);
             
             System.out.println("Successfully vectorized and stored " + vectors.size() + " knowledge entries");

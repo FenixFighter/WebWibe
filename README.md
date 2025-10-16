@@ -1,78 +1,279 @@
-# WW2 AI Service
+# WebWibe - AI Banking Support System
 
-Production-ready Spring Boot application with PostgreSQL database and AI integration.
+Производственная система поддержки клиентов банка с интеграцией ИИ, построенная на Spring Boot и PostgreSQL.
 
-## Quick Start
+## 🚀 Быстрый запуск
 
-### Prerequisites
-- Docker and Docker Compose installed
-- Git
+### Требования
 
-### Run the application
+- **Docker и Docker Compose** - для контейнеризации
+- **Git** - для клонирования репозитория
+- **Java 21** - для локальной разработки
+- **Gradle 8.x** - для сборки проекта
+- **Минимум 4GB RAM** - для работы системы
+- **Порты 8081 и 5432** должны быть свободны
+
+### Настройка Gradle
+
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd ww2
+# Проверка версии Java
+java -version
 
-# Start the application with database
+# Проверка версии Gradle
+./gradlew --version
+
+# Если Gradle не установлен, используйте wrapper
+chmod +x gradlew
+./gradlew --version
+```
+
+### Полная настройка и запуск
+
+1. **Запуск системы с базой данных**
+
+```bash
+# Запуск всех сервисов (приложение + PostgreSQL + база знаний)
 docker-compose up -d
 
-# Check logs
+# Проверка статуса
+docker-compose ps
+
+# Просмотр логов
 docker-compose logs -f ww2-app
 ```
 
-### Access the application
-- **API**: http://localhost:8081
+2. **Проверка работоспособности**
+
+```bash
+# Проверка здоровья приложения
+curl http://localhost:8081/actuator/health
+
+# Проверка базы данных
+docker-compose exec postgres psql -U postgres -d postgres -c "SELECT COUNT(*) FROM knowledge_vectors;"
+```
+
+### Доступ к приложению
+
+- **Чат с клиентами**: http://localhost:8081/chat.html
+- **Панель поддержки**: http://localhost:8081/support.html
+- **API**: http://localhost:8081/api
 - **Health Check**: http://localhost:8081/actuator/health
 
-## API Usage
+## 📊 База знаний
 
-### Process Question
+Система автоматически загружает базу знаний из файла `smart_support_vtb_belarus_faq_final.csv` при первом запуске.
+
+### Структура базы знаний
+
+- **Категории**: продукты, кредиты, карты, вклады
+- **Подкатегории**: потребительские, ипотечные, депозитные
+- **Вопросы**: 996+ готовых вопросов и ответов
+- **Векторный поиск**: интеллектуальный поиск похожих вопросов
+
+### Проверка загрузки базы знаний
+
+```bash
+# Подключение к базе данных
+docker-compose exec postgres psql -U postgres -d postgres
+
+# Проверка количества записей
+SELECT COUNT(*) FROM knowledge_vectors;
+
+# Просмотр категорий
+SELECT DISTINCT category FROM knowledge_vectors LIMIT 10;
+
+# Выход из psql
+\q
+```
+
+## 🔧 API Использование
+
+### Обработка вопроса
+
 ```bash
 curl -X POST http://localhost:8081/api/question \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "How to apply for a credit card?",
-    "category": "Banking"
+    "message": "Как получить карту Форсаж?",
+    "category": "карты"
   }'
 ```
 
-### Available Categories
-- `Banking` - Banking services (credit cards, loans, savings)
-- `Technical Support` - Technical issues (login, mobile app)
-- `General` - General inquiries (contact, support)
+### Доступные категории
 
-## Production Configuration
+- `продукты` - Банковские продукты
+- `кредиты` - Кредитные продукты
+- `карты` - Банковские карты
+- `вклады` - Депозитные продукты
+- `техническая поддержка` - Технические вопросы
 
-The application uses environment variables for configuration:
+## 🏗️ Архитектура
 
-- `SPRING_DATASOURCE_URL` - Database connection URL
-- `SPRING_DATASOURCE_USERNAME` - Database username
-- `SPRING_DATASOURCE_PASSWORD` - Database password
-- `SPRING_AI_OPENAI_API_KEY` - AI service API key
-- `SPRING_AI_OPENAI_BASE_URL` - AI service base URL
+### Компоненты системы
 
-## Management
+- **Frontend**: HTML5, CSS3, JavaScript, WebSocket
+- **Backend**: Spring Boot, WebFlux, WebSocket (STOMP)
+- **База данных**: PostgreSQL 16 с расширением pgvector
+- **ИИ интеграция**: Внешний API для генерации ответов
+- **Векторный поиск**: Интеллектуальный поиск по базе знаний
 
-### Stop the application
+### Технологический стек
+
+- **Java 21** - Основной язык разработки
+- **Spring Boot 3.x** - Фреймворк приложения
+- **PostgreSQL 16** - База данных
+- **pgvector** - Векторные операции
+- **Docker** - Контейнеризация
+- **WebSocket** - Реальное время
+- **Gradle** - Сборка проекта
+
+## 🛠️ Разработка
+
+### Настройка Gradle
+
+#### Установка Gradle
+
 ```bash
-docker-compose down
+# Вариант 1: Использование Gradle Wrapper (рекомендуется)
+./gradlew --version
+
+# Вариант 2: Установка Gradle глобально
+# macOS
+brew install gradle
+
+# Ubuntu/Debian
+sudo apt install gradle
+
+# Windows
+# Скачайте с https://gradle.org/install/
 ```
 
-### View logs
+#### Конфигурация Gradle
+
 ```bash
-docker-compose logs -f
+# Проверка конфигурации
+./gradlew properties
+
+# Очистка кэша
+./gradlew clean
+
+# Просмотр задач
+./gradlew tasks
 ```
 
-### Restart services
+#### Зависимости проекта
+
 ```bash
-docker-compose restart
+# Просмотр зависимостей
+./gradlew dependencies
+
+# Обновление зависимостей
+./gradlew dependencyUpdates
+
+# Проверка уязвимостей
+./gradlew dependencyCheckAnalyze
 ```
 
-## Architecture
+### Сборка проекта
 
-- **Application**: Spring Boot with WebFlux for reactive programming
-- **Database**: PostgreSQL 16 with persistent volumes
-- **AI Integration**: SciBox AI service for intelligent responses
-- **Health Monitoring**: Spring Boot Actuator for health checks
-- **Containerization**: Multi-stage Docker build for optimized production image
+```bash
+# Сборка JAR файла
+./gradlew bootJar
+
+# Сборка с тестами
+./gradlew build
+
+# Сборка без тестов
+./gradlew build -x test
+```
+
+### Локальная разработка
+
+```bash
+# Запуск только базы данных
+docker-compose up -d postgres
+
+# Запуск приложения локально
+./gradlew bootRun
+```
+
+## 📈 Мониторинг
+
+### Health Checks
+
+- **Application**: http://localhost:8081/actuator/health
+- **Database**: Автоматическая проверка подключения
+- **AI Service**: Проверка доступности внешнего API
+
+### Логирование
+
+- **Уровень**: INFO для продакшена
+- **Формат**: JSON для структурированных логов
+- **Ротация**: Автоматическая ротация логов
+
+## 🔒 Безопасность
+
+### Конфигурация
+
+- **База данных**: Изолированная сеть Docker
+- **API**: Валидация входных данных
+- **WebSocket**: Аутентификация через сессии
+
+### Переменные окружения
+
+```bash
+# База данных
+POSTGRES_DB=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
+# Приложение
+SPRING_PROFILES_ACTIVE=prod
+SERVER_PORT=8081
+```
+
+## 🚨 Устранение неполадок
+
+### Проблемы с запуском
+
+```bash
+# Проверка портов
+netstat -tulpn | grep :8081
+netstat -tulpn | grep :5432
+
+# Очистка Docker
+docker system prune -a
+docker-compose down -v
+```
+
+### Проблемы с базой данных
+
+```bash
+# Проверка подключения
+docker-compose exec postgres pg_isready
+
+# Сброс базы данных
+docker-compose down -v
+docker-compose up -d
+```
+
+### Проблемы с ИИ
+
+- Проверьте доступность внешнего API
+- Убедитесь в корректности API ключей
+- Проверьте логи приложения
+
+## 📞 Поддержка
+
+При возникновении проблем:
+
+1. Проверьте логи: `docker-compose logs -f`
+2. Проверьте статус: `docker-compose ps`
+3. Перезапустите систему: `docker-compose restart`
+4. При критических ошибках: `docker-compose down -v && docker-compose up -d`
+
+---
+
+**Версия**: 1.0.0  
+**Автор**: WebWibe Team  
+**Лицензия**: Proprietary

@@ -92,7 +92,6 @@ function updateCustomerInfo() {
   successMsg.className = "success-message";
   successMsg.textContent = "Contact information updated!";
 
-  // Добавляем сообщение после формы, а не внутрь неё
   form.parentNode.insertBefore(successMsg, form.nextSibling);
 
   setTimeout(() => {
@@ -150,7 +149,6 @@ function displayMessage(messageData) {
     const senderClass = messageData.sender.toLowerCase();
     messageDiv.className = `message ${senderClass}`;
 
-    // Рейтинг показывается только в интерфейсе поддержки, не в чате с пользователем
     let ratingHtml = "";
 
     let suggestionsHtml = "";
@@ -162,10 +160,8 @@ function displayMessage(messageData) {
       suggestionsHtml = createSuggestionsHtml(messageData.suggestions);
     }
 
-    // Убираем [DATA_SOURCE] из контента сообщения
     const cleanContent = messageData.content.replace(/\[DATA_SOURCE\]/g, "");
 
-    // Создаем HTML для категории и подкатегории
     let categoryHtml = "";
     if (
       messageData.sender === "AI" &&
@@ -230,15 +226,12 @@ function displayMessage(messageData) {
   scrollToBottom();
 }
 
-// Рейтинг отображается только в интерфейсе поддержки
-
 // Create suggestions HTML
 function createSuggestionsHtml(suggestions) {
   if (!suggestions || suggestions.length === 0) return "";
 
   const suggestionsList = suggestions
     .map((suggestion) => {
-      // Убираем [DATA_SOURCE] из предложений
       const cleanSuggestion = suggestion.replace(/\[DATA_SOURCE\]/g, "");
       return `<div class="suggestion-item" onclick="sendSuggestion('${cleanSuggestion.replace(
         /'/g,

@@ -223,7 +223,6 @@ function applyFilters() {
 function getChatImportance(chat) {
   let score = 0;
 
-  // Low AI rating increases importance
   if (chat.lowRating) {
     score += 3;
   }
@@ -299,7 +298,6 @@ function displayChatRooms(chats) {
                 </div>`
         : '<div class="customer-info"><div class="customer-name">Anonymous customer</div></div>';
 
-    // Check for low AI ratings
     const hasLowRating = chat.lowRating || false;
     if (hasLowRating) {
       roomDiv.classList.add("low-rating");
